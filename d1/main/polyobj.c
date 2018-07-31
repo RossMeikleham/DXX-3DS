@@ -287,7 +287,7 @@ polymodel *read_model_file(polymodel *pm,char *filename,robot_info *r)
 	id = pof_read_int(model_buf);
 
 	if (id!=0x4f505350) /* 'OPSP' */
-		Error("Bad ID in model file <%s>",filename);
+		Error("Bad ID in model file <%s>....ID==0x%0x",filename, id);
 
 	version = pof_read_short(model_buf);
 	

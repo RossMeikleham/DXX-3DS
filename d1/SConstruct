@@ -32,14 +32,14 @@ class DXXCommon:
 
 			self.debug = int(ARGUMENTS.get('debug', 0))
 			self.profiler = int(ARGUMENTS.get('profiler', 0))
-			self.opengl = int(ARGUMENTS.get('opengl', 1))
+			self.opengl = int(ARGUMENTS.get('opengl', 0))
 			self.asm = int(ARGUMENTS.get('asm', 0))
 			self.editor = int(ARGUMENTS.get('editor', 0))
 			self.extra_version = ARGUMENTS.get('extra_version', None)
 			self.sdlmixer = int(ARGUMENTS.get('sdlmixer', 1))
 			self.ipv6 = int(ARGUMENTS.get('ipv6', 0))
-			self.use_udp = int(ARGUMENTS.get('use_udp', 1))
-			self.use_tracker = int(ARGUMENTS.get('use_tracker', 1))
+			self.use_udp = int(ARGUMENTS.get('use_udp', 0))
+			self.use_tracker = int(ARGUMENTS.get('use_tracker', 0))
 			self.verbosebuild = int(ARGUMENTS.get('verbosebuild', 0))
 			self.raspberrypi = int(ARGUMENTS.get('raspberrypi', 0))
 			self.rpi_vc_path = str(ARGUMENTS.get('rpi_vc_path', self.RPI_DEFAULT_VC_PATH))
@@ -151,7 +151,7 @@ class DXXCommon:
 
 		self.env.Append(CCFLAGS = ['-Wall', '-funsigned-char', '-Werror=implicit-int', '-Werror=implicit-function-declaration', '-pthread'])
 		self.env.Append(CFLAGS = ['-std=gnu99'])
-		self.env.Append(CPPDEFINES = ['NETWORK'])
+		#self.env.Append(CPPDEFINES = ['NETWORK'])
 		# Get traditional compiler environment variables
 		for cc in ['CC', 'CXX']:
 			if os.environ.has_key(cc):

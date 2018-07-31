@@ -547,8 +547,6 @@ int load_mission(mle *mission)
 	Secret_level_names = NULL;
 
 	// for Descent 1 missions, load descent.hog
-	if (!PHYSFSX_contfile_init("descent.hog", 1))
-		Error("descent.hog not available!\n");
 	if (!d_stricmp(Current_mission_filename, D1_MISSION_FILENAME))
 		return load_mission_d1();
 

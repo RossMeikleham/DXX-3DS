@@ -790,12 +790,14 @@ int state_save_all(int blind_save)
 	int	rval;
 	char	filename[PATH_MAX], desc[DESC_LENGTH+1];
 
+#ifdef NETWORK
 	if ( Game_mode & GM_MULTI )
 	{
 		if (Game_mode & GM_MULTI_COOP)
 			multi_initiate_save_game();
 		return 0;
 	}
+#endif
 
 	stop_time();
 
@@ -1042,6 +1044,7 @@ int state_save_all_sub(char *filename, char *desc)
 	PHYSFS_write(fp, &i, sizeof(int), 1); // was Lunacy
 
 // Save Coop Info
+#ifdef NETWORK
 	if (Game_mode & GM_MULTI_COOP)
 	{
 		for (i = 0; i < MAX_PLAYERS; i++) // I know, I know we only allow 4 players in coop. I screwed that up. But if we ever allow 8 players in coop, who's gonna laugh then?
@@ -1063,6 +1066,7 @@ int state_save_all_sub(char *filename, char *desc)
 		PHYSFS_write(fp, &Netgame.numconnected, sizeof(ubyte), 1);
 		PHYSFS_write(fp, &Netgame.level_time, sizeof(int), 1);
 	}
+#endif
 
 	PHYSFS_close(fp);
 
@@ -1082,12 +1086,14 @@ int state_restore_all(int in_game)
 	if ( Newdemo_state != ND_STATE_NORMAL )
 		return 0;
 
+#ifdef NETWORK
 	if ( Game_mode & GM_MULTI )
 	{
 		if (Game_mode & GM_MULTI_COOP)
 			multi_initiate_restore_game();
 		return 0;
 	}
+#endif
 
 	stop_time();
 	if (!state_get_restore_file(filename))	{
@@ -1393,6 +1399,7 @@ RetryObjectLoading:
 	}
 
 // Read Coop Info
+#ifdef NETWORK
 	if (Game_mode & GM_MULTI_COOP)
 	{
 		player restore_players[MAX_PLAYERS];
@@ -1481,6 +1488,7 @@ RetryObjectLoading:
 		Viewer = ConsoleObject = &Objects[Players[Player_num].objnum]; // make sure Viewer and ConsoleObject are set up (which we skipped by not using InitPlayerObject but we need since objects changed while loading)
 		special_reset_objects(); // since we juggeled around with objects to remap coop players rebuild the index of free objects
 	}
+#endif //NETWORK
 
 	PHYSFS_close(fp);
 

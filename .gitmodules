@@ -1,0 +1,3 @@
+[submodule "physfs"]
+	path = physfs
+	url = git@github.com:aagallag/physfs-switch.git

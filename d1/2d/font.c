@@ -857,6 +857,8 @@ void gr_get_string_size(const char *s, int *string_width, int *string_height, in
 	int i = 0;
 	float width=0.0,spacing=0.0,longest_width=0.0,string_width_f=0.0,string_height_f=0.0;
 
+	if (grd_curcanv->cv_font == 0)
+		Error("grd_curcanv->cv_font is not set...\n");
 	string_height_f = FONTSCALE_Y(grd_curcanv->cv_font->ft_h);
 	string_width_f = 0;
 	*average_width = grd_curcanv->cv_font->ft_w;
@@ -992,12 +994,14 @@ grs_font * gr_init_font( const char * fontname )
 
 	if (!fontfile) {
 		con_printf(CON_VERBOSE, "Can't open font file %s\n", fontname);
+		Error("Can't open font file %s\n", fontname);
 		return NULL;
 	}
 
 	PHYSFS_read(fontfile, file_id, 4, 1);
 	if (memcmp( file_id, "PSFN", 4 )) {
 		con_printf(CON_NORMAL, "File %s is not a font file\n", fontname);
+		Error("File %s is not a font file\n", fontname);
 		return NULL;
 	}
 
@@ -1065,6 +1069,8 @@ grs_font * gr_init_font( const char * fontname )
 	grd_curcanv->cv_font        = font;
 	grd_curcanv->cv_font_fg_color    = 0;
 	grd_curcanv->cv_font_bg_color    = 0;
+	if (grd_curcanv->cv_font == NULL)
+		Error("grd_curcanv->cv_font was set to an invalid font...\n");
 
 #ifdef OGL
 	ogl_init_font(font);

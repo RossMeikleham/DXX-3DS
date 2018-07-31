@@ -94,12 +94,8 @@ int gr_set_mode(u_int32_t mode)
 	if (mode<=0)
 		return 0;
 
-	w=SM_W(mode);
-	h=SM_H(mode);
-	screen=NULL;
-
-	SDL_WM_SetCaption(DESCENT_VERSION, "Descent");
-	SDL_WM_SetIcon( SDL_LoadBMP( "d1x-rebirth.bmp" ), NULL );
+	w = 1280;
+	h = 720;
 
 	if(SDL_VideoModeOK(w,h,GameArg.DbgBpp,sdl_video_flags))
 	{

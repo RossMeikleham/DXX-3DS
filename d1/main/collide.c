@@ -1095,6 +1095,7 @@ void collide_player_and_player( object * player1, object * player2, vms_vector *
 	if (check_collision_delayfunc_exec())
 		digi_link_sound_to_pos( SOUND_ROBOT_HIT_PLAYER, player1->segnum, 0, collision_point, 0, F1_0 );
 
+#if NETWORK
 	// Multi is special - as always. Clients do the bump damage locally but the remote players do their collision result (change velocity) on their own. So after our initial collision, ignore further collision damage till remote players (hopefully) react.
 	if (Game_mode & GM_MULTI)
 	{
@@ -1110,6 +1111,7 @@ void collide_player_and_player( object * player1, object * player2, vms_vector *
 			damage_flag = 1;
 		}
 	}
+#endif
 
 	bump_two_objects(player1, player2, damage_flag);
 	return;
@@ -1156,11 +1158,13 @@ void drop_missile_1_or_4(object *playerobj,int missile_index, ubyte force)
 	powerup_id = Secondary_weapon_to_powerup[missile_index];
 
 
+#ifdef NETWORK
 	if(! force) {
 		if(missile_index == CONCUSSION_INDEX && Game_mode & GM_MULTI && Netgame.RespawnConcs) {
 			num_missiles = RespawningConcussions[playerobj->id];
 		} 
 	}
+#endif
 	
 	//	if (num_missiles > 10)
 	//		num_missiles = 10;
@@ -1207,12 +1211,14 @@ void drop_player_eggs_remote(object *playerobj, ubyte remote)
 		//Drop the vulcan, gauss, and ammo
 		vulcan_ammo = Players[pnum].primary_ammo[VULCAN_INDEX];
 		int min_vulcan_ammo = VULCAN_WEAPON_AMMO_AMOUNT;
+#ifdef NETWORK
 		if ( (Game_mode & GM_MULTI) &&
 			 (!(Game_mode & GM_MULTI_COOP)) &&
 			 Netgame.LowVulcan )
 		{
 			min_vulcan_ammo = VULCAN_WEAPON_AMMO_AMOUNT /2;
 		}
+#endif
 		if (vulcan_ammo < min_vulcan_ammo)
 			vulcan_ammo = min_vulcan_ammo;	//make sure gun has at least as much as a powerup
 		objnum = maybe_drop_primary_weapon_egg(playerobj, VULCAN_INDEX);
@@ -1306,8 +1312,10 @@ void apply_damage_to_player(object *player, object *killer, fix damage, ubyte po
 	if (Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE)
 		return;
 
+#ifdef NETWORK
 	if (multi_maybe_disable_friendly_fire(killer) && possibly_friendly)
 		return;
+#endif
 
 	if (Endlevel_sequence)
 		return;

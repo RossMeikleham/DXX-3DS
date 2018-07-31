@@ -46,3 +46,12 @@ Thumbs.db
 # Note: committing these is optional
 *.mode1v3
 *.pbxuser
+
+# VSCode
+.vscode/
+
+# PC build
+d1x-rebirth
+
+# Release zips
+releases/

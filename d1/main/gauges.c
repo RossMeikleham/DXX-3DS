@@ -1561,13 +1561,13 @@ void draw_player_ship(int cloak_state,int x, int y)
 		bm = &GameBitmaps[Gauges[GAUGE_SHIPS+get_team(Player_num)].index];
 	}
 	else
-#endif
 	{
 		int color = Netgame.players[Player_num].color; 
 		
 		PIGGY_PAGE_IN(Gauges[GAUGE_SHIPS+color]);
 		bm = &GameBitmaps[Gauges[GAUGE_SHIPS+color].index];
 	}
+#endif
 
 	//for(int i = 0; i < 8; i++) {
 	//	con_printf(CON_NORMAL, "Player ship %d %d\n", i, Gauges[GAUGE_SHIPS+i].index);
@@ -2182,7 +2182,9 @@ void show_mousefs_indicator(int mx, int my, int mz, int x, int y, int size)
 	gr_settransblend(GR_FADE_OFF, GR_BLEND_NORMAL);
 }
 
+#ifdef NETWORK
 extern struct connection_status connection_statuses[]; 
+#endif
 
 void fontcolor_bad() {
 	gr_set_fontcolor(BM_XRGB(25, 0, 0), -1);
@@ -2472,6 +2474,7 @@ int see_object(int objnum)
 
 void show_HUD_names()
 {
+#ifdef NETWORK
 	int is_friend = 0, show_friend_name = 0, show_enemy_name = 0, show_name = 0, show_typing = 0, show_indi = 0, pnum = 0, objnum = 0;
 	
 	if(Netgame.BlackAndWhitePyros) 
@@ -2599,6 +2602,7 @@ void show_HUD_names()
 			}
 		}
 	}
+#endif //NETWORK
 }
 
 //draw all the things on the HUD
@@ -2667,16 +2671,20 @@ void draw_hud()
 				newdemo_record_player_flags(Players[Player_num].flags);
 		}
 
+#ifdef NETWORK
 #ifndef RELEASE
 		if (!(Game_mode&GM_MULTI && Show_kill_list))
 			show_time();
+#endif
 #endif
 		HUD_render_message_frame();
 
 		if (PlayerCfg.CockpitMode[1]!=CM_STATUS_BAR)
 			hud_show_lives();
+#ifdef NETWORK
 		if (Game_mode&GM_MULTI && Show_kill_list)
 			hud_show_kill_list();
+#endif
 		if (PlayerCfg.CockpitMode[1] != CM_LETTERBOX)
 			show_reticle(PlayerCfg.ReticleType, 1);
 		if (PlayerCfg.CockpitMode[1] != CM_LETTERBOX && Newdemo_state != ND_STATE_PLAYBACK && (PlayerCfg.MouseControlStyle == MOUSE_CONTROL_FLIGHT_SIM) && PlayerCfg.MouseFSIndicator) /* Old School Mouse */

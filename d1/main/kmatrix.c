@@ -70,6 +70,7 @@ void kmatrix_draw_item( int  i, int *sorted )
 	{
 		x = FSPACX(70 + CENTERING_OFFSET(N_players) + j*25);
 
+#ifdef NETWORK
 		if (sorted[i]==sorted[j])
 		{
 			if (kill_matrix[sorted[i]][sorted[j]] == 0)
@@ -96,6 +97,7 @@ void kmatrix_draw_item( int  i, int *sorted )
 				gr_printf( x, y, "%d", kill_matrix[sorted[i]][sorted[j]] );
 			}
 		}
+#endif
 	}
 
 	if (Players[sorted[i]].net_killed_total+Players[sorted[i]].net_kills_total==0)
@@ -126,17 +128,21 @@ void kmatrix_draw_names(int *sorted)
 {
 	int j, x, color;
 
+#ifdef NETWORK
 	if(Netgame.BlackAndWhitePyros) 
 		selected_player_rgb = player_rgb_alt; 
 	else
+#endif
 		selected_player_rgb = player_rgb;
 
 	for (j=0; j<N_players; j++)
 	{
+#ifdef NETWORK
 		if (Game_mode & GM_TEAM)
 			color = get_color_for_team(sorted[j], 0);
 		else
 			color = get_color_for_player(sorted[j], 0);//sorted[j];
+#endif
 
 		x = FSPACX (70 + CENTERING_OFFSET(N_players) + j*25);
 
@@ -190,9 +196,11 @@ void kmatrix_redraw(kmatrix_screen *km)
 	gr_set_current_canvas(NULL);
 	show_fullscr(&km->background);
 	
+#ifdef NETWORK
 	if(Netgame.BlackAndWhitePyros) 
 		selected_player_rgb = player_rgb_alt; 
 	else
+#endif
 		selected_player_rgb = player_rgb;
 	
 	if (Game_mode & GM_MULTI_COOP)
@@ -201,21 +209,27 @@ void kmatrix_redraw(kmatrix_screen *km)
 	}
 	else
 	{
+#ifdef NETWORK
 		multi_sort_kill_list();
+#endif
 		grd_curcanv->cv_font = MEDIUM3_FONT;
 
 		gr_string( 0x8000, FSPACY(10), TXT_KILL_MATRIX_TITLE);
 
 		grd_curcanv->cv_font = GAME_FONT;
+#ifdef NETWORK
 		multi_get_kill_list(sorted);
+#endif
 		kmatrix_draw_names(sorted);
 
 		for (i=0; i<N_players; i++ )
 		{
+#ifdef NETWORK
 			if (Game_mode & GM_TEAM)
 				color = get_color_for_team(sorted[i], 0);
 			else
 				color = get_color_for_player(sorted[i], 0);//sorted[j];
+#endif
 
 			if (Players[sorted[i]].connected==CONNECT_DISCONNECTED)
 				gr_set_fontcolor(gr_find_closest_color(31,31,31),-1);
@@ -234,11 +248,15 @@ void kmatrix_redraw_coop()
 	int i, color;
 	int sorted[MAX_PLAYERS];
 
+#ifdef NETWORK
 	multi_sort_kill_list();
+#endif NETWORK
 	grd_curcanv->cv_font = MEDIUM3_FONT;
 	gr_string( 0x8000, FSPACY(10), "COOPERATIVE SUMMARY");
 	grd_curcanv->cv_font = GAME_FONT;
+#ifdef NETWORK
 	multi_get_kill_list(sorted);
+#endif
 	kmatrix_draw_coop_names(sorted);
 
 	for (i=0; i<N_players; i++ )
@@ -270,7 +288,9 @@ int kmatrix_handler(window *wind, d_event *event, kmatrix_screen *km)
 					if (km->network)
 					{
 						StartAbortMenuTime=timer_query();
+#ifdef NETWORK
 						choice=nm_messagebox1( NULL,multi_endlevel_poll2, NULL, 2, TXT_YES, TXT_NO, TXT_ABORT_GAME );
+#endif
 					}
 					else
 						choice=nm_messagebox( NULL, 2, TXT_YES, TXT_NO, TXT_ABORT_GAME );
@@ -278,11 +298,14 @@ int kmatrix_handler(window *wind, d_event *event, kmatrix_screen *km)
 					if (choice==0)
 					{
 						Players[Player_num].connected=CONNECT_DISCONNECTED;
-						
+
+#ifdef NETWORK
 						if (km->network)
 							multi_send_endlevel_packet();
-						
+#endif
+#ifdef NETWORK
 						multi_leave_game();
+#endif
 						window_close(wind);
 						if (Game_wind)
 							window_close(Game_wind);
@@ -298,8 +321,10 @@ int kmatrix_handler(window *wind, d_event *event, kmatrix_screen *km)
 		case EVENT_WINDOW_DRAW:
 			timer_delay2(50);
 
+#ifdef NETWORK
 			if (km->network)
 				multi_do_protocol_frame(0, 1);
+#endif
 			
 			km->playing = 0;
 
@@ -320,8 +345,10 @@ int kmatrix_handler(window *wind, d_event *event, kmatrix_screen *km)
 			// Check if end_time has been reached and exit loop
 			if (timer_query() >= km->end_time && km->end_time != -1)
 			{
+#ifdef NETWORK
 				if (km->network)
 					multi_send_endlevel_packet();  // make sure
+#endif
 				
 				window_close(wind);
 				break;

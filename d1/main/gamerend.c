@@ -113,9 +113,11 @@ void show_framerate()
 }
 
 void show_observers() {
+#ifdef NETWORK
 	if(Netgame.max_numobservers == 0) {
 		return;
 	}
+#endif
 
 	int y = GHEIGHT;
 
@@ -141,10 +143,12 @@ void show_observers() {
 
 	y -= LINE_SPACING*2; 
 
+#ifdef NETWORK
 	for(int i = 0; i < Netgame.numobservers; i++) {
 		gr_printf(SWIDTH-FSPACX(strlen(Netgame.observers[i].callsign)*5 + 5),y,"%s",Netgame.observers[i].callsign);
 		y -= LINE_SPACING; 
 	}
+#endif
 
 	gr_set_fontcolor(BM_XRGB(8,8,32),-1);
 	gr_printf(SWIDTH-FSPACX(37+15),y,"Observers:");

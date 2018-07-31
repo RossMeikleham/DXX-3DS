@@ -1,35 +1,49 @@
-DXX Retro
-=========
+# DXX Switch
 
-Latest versions
----------------
+A Nintendo Switch port of Descent I.  I hope to add support for Descent II in the future.  This is a fork of [DXX-Retro](https://github.com/CDarrow/DXX-Retro), which is a fork of [DXX-Rebirth](https://github.com/dxx-rebirth/dxx-rebirth), which is a fork of the original engine source code created by Parallax Software Corporation.
 
-* D1X-Retro - 1.4X6
-* D2X-Retro - 1.3a
+## Install instructions
+- Create a folder on your sdcard, such as `/switch/d1x-switch/`.
+- Copy `d1x-switch.nro` and `descent.cfg` to this directory.  [Download the latest release here.](https://github.com/aagallag/DXX-Switch/releases)
+- Copy `descent.hog` and `descent.pig` to the same directory.  These files are included with a purchase of the game.  Tested with [Descent from Steam](https://store.steampowered.com/app/273570/Descent/).
 
-Changelog
----------
+## Known issues and missing features
+- Savefiles can't be loaded or created
+- Doesn't support the joysticks
+- No music
+- Only tested with the Descent files from Steam; GOG and CD-ROM releases have not been tested
+- Doesn't utilize 1080p resolution when docked
+- Need an icon
+- Resize the text for larger resolutions
+- Enable the original HUD
+- Network/Multiplayer is not enabled
 
-<h3>1.4X6 - 1/16/2018</h3>
+## Compile instructions
 
-This experimental release is for D1X-Retro only.
+### Dependencies
+- [devkitPro/libnx](https://devkitpro.org/wiki/devkitPro_pacman)
 
-* Coop
-* * Don't respawn robots in coop.
-* Demos
-* * Fix rewind bug where rewinding through a frame with multiple damage sources would show damage and energy incorrectly.
-* Mac
-* * Switch from XCode to scons for building.  Note: message box tech is disabled for now, crashes will only display to the terminal or the log.  To see them, run Descent from Terminal using the command `./d1x-retro-1.4.X6.app/Contents/MacOS/d1x-rebirth`
-* Observer
-* * Don't lock to player 1's view while observing in coop.
-* * Observers no longer disconnected when other observers connect or disconnect.
-* * Observers no longer see themselves connect as an unpatched client when someone else connects to the game.
-* * Observers will now be properly told that they can't observe a game that hasn't yet started.
-* * You can now observe players directly in first and third person view.  Use Ctrl+1 through Ctrl+8 to observe players 1 through 8.  Use Ctrl+9 and Ctrol+0 to cycle back and forth through the connected players and free observing.  Use Ctrl+- for first person view and Ctrl+= for third person view.
-* * Added the above options to the multiplayer F1 help menu, and streamlined the menu to only display relevent commands.
-* * Documented the /noobs command (kick all observers) in the F1 help menu.
-* * Shields and shield changes are now visible to observers.
+### Linux Compile Instructions
 
-<h3>1.4X5 and earlier</h3>
+Start by compiling and installing SDL-1.2 and SDL_mixer for libnx
+```
+git clone git@github.com:aagallag/SDL-SWITCH.git -b master-aagallag
+cd SDL-SWITCH/
+make SDL
+cd SDL-1.2.15/
+make install
+cd ../
+make SDL_mixer
+cd SDL_mixer-1.2.12/
+make install
+```
 
-* For changes to 1.4X5 and prior, please see the source.
+Then compile DXX Switch.
+```
+git clone --recurse-submodules git@github.com:aagallag/DXX-Switch.git
+cd switch-descent/
+make
+```
+
+## License
+See [COPYING.txt](COPYING.txt)

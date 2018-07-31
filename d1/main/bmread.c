@@ -396,9 +396,9 @@ int gamedata_read_tbl(int pc_shareware)
 
 	// Open BITMAPS.TBL for reading.
 	have_bin_tbl = 0;
-	InfoFile = PHYSFSX_openReadBuffered("BITMAPS.TBL");
+	InfoFile = PHYSFSX_openReadBuffered("bitmaps.tbl");
 	if (InfoFile == NULL) {
-		InfoFile = PHYSFSX_openReadBuffered("BITMAPS.BIN");
+		InfoFile = PHYSFSX_openReadBuffered("bitmaps.bin");
 		if (InfoFile == NULL)
 			Error("Missing BITMAPS.TBL and BITMAPS.BIN file\n");
 		have_bin_tbl = 1;
@@ -1394,7 +1394,6 @@ void bm_read_player_ship(int skip)
 
 void bm_read_some_file(int skip)
 {
-
 	switch (bm_flag) {
 	case BM_COCKPIT:	{
 		bitmap_index bitmap;

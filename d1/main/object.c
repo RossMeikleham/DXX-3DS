@@ -200,6 +200,7 @@ void draw_object_blob(object *obj,bitmap_index bmi)
 		vm_vec_scale_add2(&pos,&offs_vec,F1_0);
 	}
 
+#ifdef NETWORK
 	if( (Game_mode & GM_MULTI) && 
 		Netgame.DarkSmartBlobs &&
 		obj->type == OBJ_WEAPON && 
@@ -217,6 +218,14 @@ void draw_object_blob(object *obj,bitmap_index bmi)
 			
 
 	}
+#else
+	if (bm->bm_w > bm->bm_h)
+				g3_draw_bitmap(&pos,obj->size,fixmuldiv(obj->size,bm->bm_h,bm->bm_w),bm);
+
+			else
+				g3_draw_bitmap(&pos,fixmuldiv(obj->size,bm->bm_w,bm->bm_h),obj->size,bm);
+#endif
+
 
 }
 
@@ -336,8 +345,10 @@ static void draw_cloaked_object(object *obj,g3s_lrgb light,fix *glow,fix64 cloak
 
 	bitmap_index * alt_textures = NULL;
 
+#ifdef NETWORK
 	if ( obj->rtype.pobj_info.alt_textures > 0 )
 		alt_textures = multi_player_textures[obj->rtype.pobj_info.alt_textures-1];
+#endif
 
 	if (fading) {
 		fix new_glow;
@@ -436,8 +447,10 @@ void draw_polygon_object(object *obj)
 				draw_cloaked_object(obj,light,engine_glow_value, GameTime64-F1_0*10, GameTime64+F1_0*10);
 		} else {
 			bitmap_index * alt_textures = NULL;
+#ifdef NETWORK
 			if ( obj->rtype.pobj_info.alt_textures > 0 )
 				alt_textures = multi_player_textures[obj->rtype.pobj_info.alt_textures-1];
+#endif
 			if (obj->type == OBJ_WEAPON && (Weapon_info[obj->id].model_num_inner > -1 )) {
 				fix dist_to_eye = vm_vec_dist_quick(&Viewer->pos, &obj->pos);
 				gr_settransblend(GR_FADE_OFF, GR_BLEND_ADDITIVE_A);

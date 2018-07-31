@@ -1200,7 +1200,9 @@ void StartNewLevelSub(int level_num, int page_in_textures, int secret_flag)
 	copy_defaults_to_robot_all();
 	init_controlcen_for_level();
 
+#ifdef NETWORK
 	reset_respawnable_bots();
+#endif
 
 	//	Say player can use FLASH cheat to mark path to exit.
 	Last_level_path_created = -1;
@@ -1366,10 +1368,12 @@ void StartLevel(int random)
 
 	if (Game_mode & GM_MULTI)
 	{
+#ifdef NETWORK
 		if ((Game_mode & GM_MULTI_COOP) || (Game_mode & GM_MULTI_ROBOTS))
 			multi_send_score();
 	 	multi_send_reappear();
 		multi_do_protocol_frame(1, 1);
+#endif
 	}
 	else // in Singleplayer, after we died ...
 	{

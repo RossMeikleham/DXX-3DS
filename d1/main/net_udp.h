@@ -6,6 +6,7 @@
 
 #include "multi.h"
 
+#ifdef USE_UDP
 // Exported functions
 int net_udp_setup_game(void);
 void net_udp_manual_join_game();
@@ -167,3 +168,4 @@ typedef struct connection_status {
 	ubyte holepunch_attempts; 
 	fix64 last_direct_pong; 
 } connection_status;
+#endif

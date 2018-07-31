@@ -318,8 +318,8 @@ static inline void PHYSFSX_readMatrix(vms_matrix *m,PHYSFS_file *file)
 	PHYSFSX_readVector(&m->fvec,file);
 }
 
-#define PHYSFSX_contfile_init PHYSFSX_addRelToSearchPath
-#define PHYSFSX_contfile_close PHYSFSX_removeRelFromSearchPath
+#define PHYSFSX_contfile_init PHYSFS_addToSearchPath//PHYSFSX_addRelToSearchPath
+#define PHYSFSX_contfile_close PHYSFS_removeFromSearchPath//PHYSFSX_removeRelFromSearchPath
 
 extern int PHYSFSX_addRelToSearchPath(const char *relname, int add_to_end);
 extern int PHYSFSX_removeRelFromSearchPath(const char *relname);

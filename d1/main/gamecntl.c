@@ -380,7 +380,9 @@ int HandleDemoKey(int key)
 		KEY_MAC(case KEY_COMMAND+KEY_4:)
 		case KEY_F4:	Newdemo_show_percentage = !Newdemo_show_percentage; break;
 
+#ifdef NETWORK
 		case KEY_F6:    Show_network_stats = ! Show_network_stats; break;
+#endif
 
 		KEY_MAC(case KEY_COMMAND+KEY_7:)
 		case KEY_F7:
@@ -1325,6 +1327,7 @@ int ReadControls(d_event *event)
 	} else {
 		exploding_flag=0;
 	}
+#ifdef NETWORK
 	if (Player_is_dead && !( (Game_mode & GM_MULTI) && (multi_sending_message[Player_num] || multi_defining_message) ))
 		if (HandleDeathInput(event)) {
 			if( (Game_mode & GM_MULTI) && (Netgame.SpawnStyle == SPAWN_STYLE_PREVIEW) ) {
@@ -1337,8 +1340,10 @@ int ReadControls(d_event *event)
 				return 1;
 			}
 		}
+#endif
 
 
+#ifdef NETWORK
 	if (Game_mode & GM_OBSERVER && Newdemo_state < ND_STATE_PLAYBACK) {
 		// Force the observer to a certain camera based on whether they are freely observing or observing a specific player.
 		if (Current_obs_player == OBSERVER_PLAYER_ID) {
@@ -1405,6 +1410,7 @@ int ReadControls(d_event *event)
 			}
 		}
 	}
+#endif
 
 	if (Newdemo_state == ND_STATE_PLAYBACK)
 		update_vcr_state();

@@ -335,8 +335,8 @@ int properties_init()
 	Piggy_fp = PHYSFSX_openReadBuffered(DEFAULT_PIGFILE_REGISTERED);
 	if (Piggy_fp==NULL)
 	{
-		if (!PHYSFSX_exists("BITMAPS.TBL",1) && !PHYSFSX_exists("BITMAPS.BIN",1))
-			Error("Cannot find " DEFAULT_PIGFILE_REGISTERED " or BITMAPS.TBL");
+		if (!PHYSFSX_exists("bitmaps.tbl",1) && !PHYSFSX_exists("bitmaps.bin",1))
+			Error("Cannot find " DEFAULT_PIGFILE_REGISTERED " or BITMAPS.tbl");
 		return 1;	// need to run gamedata_read_tbl
 	}
 
@@ -366,7 +366,7 @@ int properties_init()
 
 	if (PCSharePig)
 		retval = PIGGY_PC_SHAREWARE;	// run gamedata_read_tbl in shareware mode
-	else if (GameArg.EdiNoBm || (!PHYSFSX_exists("BITMAPS.TBL",1) && !PHYSFSX_exists("BITMAPS.BIN",1)))
+	else if (GameArg.EdiNoBm || (!PHYSFSX_exists("bitmaps.tbl",1) && !PHYSFSX_exists("bitmaps.bin",1)))
 	{
 		properties_read_cmp( Piggy_fp );	// Note connection to above if!!!
 		for (i = 0; i < MAX_BITMAP_FILES; i++)

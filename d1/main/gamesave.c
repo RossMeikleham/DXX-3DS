@@ -173,8 +173,10 @@ void do_load_save_levels(int save);
 void dump_mine_info(void);
 #endif
 
+#ifdef NETWORK
 extern char MaxPowerupsAllowed[MAX_POWERUP_TYPES];
 extern char PowerupsInMine[MAX_POWERUP_TYPES];
+#endif
 
 #ifdef EDITOR
 extern char mine_filename[];
@@ -279,6 +281,7 @@ void verify_object( object * obj )	{
 
 		obj->size = Powerup_info[obj->id].size;
 
+#ifdef NETWORK
 		if (Game_mode & GM_NETWORK)
 		{
 			if (multi_powerup_is_4pack(obj->id))
@@ -292,6 +295,7 @@ void verify_object( object * obj )	{
 				MaxPowerupsAllowed[obj->id]++;
 			}
 		}
+#endif
 	}
 
 	if ( obj->type == OBJ_WEAPON )	{

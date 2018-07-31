@@ -194,11 +194,15 @@ try_again:
 	memset(filename, '\0', PATH_MAX);
 	snprintf( filename, PATH_MAX, GameArg.SysUsePlayersDir? "Players/%s.plr" : "%s.plr", text );
 
+
+// aagallag -- TODO -- fix bugs with PHYSFSX_exists
+#if 0
 	if (PHYSFSX_exists(filename,0))
 	{
 		nm_messagebox(NULL, 1, TXT_OK, "%s '%s' %s", TXT_PLAYER, text, TXT_ALREADY_EXISTS );
 		goto try_again;
 	}
+#endif
 
 	if ( !new_player_config() )
 		goto try_again;			// They hit Esc during New player config

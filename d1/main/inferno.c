@@ -31,6 +31,10 @@ char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE CORPORAT
 #include <limits.h>
 #include <SDL/SDL.h>
 
+#ifdef __SWITCH__
+#include <switch.h>
+#endif
+
 #ifdef __unix__
 #include <unistd.h>
 #include <sys/stat.h>
@@ -280,6 +284,20 @@ int standard_handler(d_event *event)
 	return 0;
 }
 
+#ifdef __SWITCH_DBG__
+void switch_init()
+{
+	gfxInitDefault();
+	consoleInit(NULL);
+	printf("\x1b[16;20HHello World!\n");
+}
+
+void switch_end()
+{
+	gfxExit();
+}
+#endif //__SWITCH__
+
 jmp_buf LeaveEvents;
 #define PROGNAME argv[0]
 
@@ -288,6 +306,9 @@ jmp_buf LeaveEvents;
 
 int main(int argc, char *argv[])
 {
+#ifdef __SWITCH_DBG__
+	switch_init();
+#endif
 	mem_init();
 #if defined(__LINUX__) || defined(__APPLE__)
 	error_init(NULL);
@@ -297,7 +318,6 @@ int main(int argc, char *argv[])
 #endif
 	PHYSFSX_init(argc, argv);
 	con_init();  // Initialise the console
-
 	setbuf(stdout, NULL); // unbuffered output via printf
 #ifdef _WIN32
 	freopen( "CON", "w", stdout );
@@ -315,9 +335,9 @@ int main(int argc, char *argv[])
 	PHYSFSX_listSearchPathContent();
 	
 	if (!PHYSFSX_checkSupportedArchiveTypes())
-		return(0);
+		Error("Required archive type not found\n");
 
-	if (! PHYSFSX_contfile_init("descent.hog", 1))
+	if (! PHYSFS_exists("descent.hog"))
 #define DXX_NAME_NUMBER	"1"
 #define DXX_HOGFILE_NAMES	"descent.hog"
 #if defined(__unix__) && !defined(__APPLE__)
@@ -360,7 +380,7 @@ int main(int argc, char *argv[])
 
 	if (GameArg.DbgVerbose)
 		con_printf(CON_VERBOSE,"%s%s", TXT_VERBOSE_1, "\n");
-	
+
 	ReadConfigFile();
 
 	PHYSFSX_addArchiveContent();
@@ -374,7 +394,7 @@ int main(int argc, char *argv[])
 
 	// Load the palette stuff. Returns non-zero if error.
 	con_printf(CON_DEBUG, "Initializing palette system...\n" );
-	gr_use_palette_table( "PALETTE.256" );
+	gr_use_palette_table( "palette.256" );
 
 	con_printf(CON_DEBUG, "Initializing font system...\n" );
 	gamefont_init();	// must load after palette data loaded.
@@ -385,7 +405,7 @@ int main(int argc, char *argv[])
 
 	set_screen_mode(SCREEN_MENU);
 
-	con_printf( CON_DEBUG, "\nDoing gamedata_init..." );
+	con_printf( CON_DEBUG, "\nDoing gamedata_init...\n" );
 	gamedata_init();
 
 	if (GameArg.DbgNoRun)
@@ -401,35 +421,35 @@ int main(int argc, char *argv[])
 
 	key_flush();
 
-		if(GameArg.SysPilot)
-		{
-			char filename[32] = "";
-			int j;
+	if(GameArg.SysPilot)
+	{
+		char filename[32] = "";
+		int j;
 
-			if (GameArg.SysUsePlayersDir)
-				strcpy(filename, "Players/");
-			strncat(filename, GameArg.SysPilot, 12);
-			filename[8 + 12] = '\0';	// unfortunately strncat doesn't put the terminating 0 on the end if it reaches 'n'
-			for (j = GameArg.SysUsePlayersDir? 8 : 0; filename[j] != '\0'; j++) {
-				switch (filename[j]) {
-					case ' ':
-						filename[j] = '\0';
-				}
+		if (GameArg.SysUsePlayersDir)
+			strcpy(filename, "Players/");
+		strncat(filename, GameArg.SysPilot, 12);
+		filename[8 + 12] = '\0';	// unfortunately strncat doesn't put the terminating 0 on the end if it reaches 'n'
+		for (j = GameArg.SysUsePlayersDir? 8 : 0; filename[j] != '\0'; j++) {
+			switch (filename[j]) {
+				case ' ':
+					filename[j] = '\0';
 			}
-			if(!strstr(filename,".plr")) // if player hasn't specified .plr extension in argument, add it
-				strcat(filename,".plr");
-			if(PHYSFSX_exists(filename,0))
-			{
-				strcpy(strstr(filename,".plr"),"\0");
-				strcpy(Players[Player_num].callsign, GameArg.SysUsePlayersDir? &filename[8] : filename);
-				read_player_file();
-				WriteConfigFile();
-			}
+		}
+		if(!strstr(filename,".plr")) // if player hasn't specified .plr extension in argument, add it
+			strcat(filename,".plr");
+		if(PHYSFSX_exists(filename,0))
+		{
+			strcpy(strstr(filename,".plr"),"\0");
+			strcpy(Players[Player_num].callsign, GameArg.SysUsePlayersDir? &filename[8] : filename);
+			read_player_file();
+			WriteConfigFile();
+		}
 	}
 
 
-		Game_mode = GM_GAME_OVER;
-		DoMenu();
+	Game_mode = GM_GAME_OVER;
+	DoMenu();
 
 	setjmp(LeaveEvents);
 	while (window_get_front())

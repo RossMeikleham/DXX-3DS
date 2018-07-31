@@ -529,16 +529,20 @@ int pick_up_secondary(int weapon_index,int count)
 			}
 		}
 
+#ifdef NETWORK
 		if(weapon_index == CONCUSSION_INDEX && (Game_mode & GM_MULTI) && Netgame.RespawnConcs) {
 			for(int i = 0; i < count - num_picked_up; i++) {
 				maybe_drop_net_powerup(POW_MISSILE_1); 
 			}
 		}
+#endif
 	}
 
+#ifdef NETWORK
 	if(weapon_index == CONCUSSION_INDEX && (Game_mode & GM_MULTI) && Netgame.RespawnConcs) {
 		RespawningConcussions[Player_num] += num_picked_up; 
 	}
+#endif
 
 	if (Players[Player_num].secondary_ammo[weapon_index] == count)	// only autoselect if player didn't have any
 	{

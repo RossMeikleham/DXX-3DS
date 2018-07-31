@@ -1399,8 +1399,10 @@ void create_smart_children(object *objp, int num_smart_children)
 				{
 					if ((parent_type == OBJ_PLAYER) && (Game_mode & GM_MULTI_COOP))
 						continue;
+#ifdef NETWORK
 					if ((Game_mode & GM_TEAM) && (get_team(curobjp->id) == get_team(Objects[objp->ctype.laser_info.parent_num].id)))
 						continue;
+#endif
 					if (Players[curobjp->id].flags & PLAYER_FLAGS_CLOAKED)
 						continue;
 				}

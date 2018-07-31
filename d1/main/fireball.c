@@ -187,8 +187,9 @@ object *object_create_explosion_sub(object *objp, short segnum, vms_vector * pos
 										}
 										
 										con_printf(CON_NORMAL, "You took %0.1f damage from %s's %s blast!\n", (double)(damage)/(double)(F1_0), killer_name, weapon_name);
-										
+#ifdef NETWORK
 										multi_send_damage(damage, obj0p->shields, killer->type, killer->id, DAMAGE_BLAST, objp);
+#endif
 									}
 
 									apply_damage_to_player(obj0p, killer, damage, 0 );
@@ -665,6 +666,7 @@ extern char PowerupsInMine[],MaxPowerupsAllowed[];
 //	Drop cloak powerup if in a network game.
 void maybe_drop_net_powerup(int powerup_type)
 {
+#ifdef NETWORK
 	if ((Game_mode & GM_MULTI) && !(Game_mode & GM_MULTI_COOP) ) {
 		int	segnum, objnum;
 		vms_vector	new_pos;
@@ -709,6 +711,7 @@ void maybe_drop_net_powerup(int powerup_type)
 		object_create_explosion(segnum, &new_pos, i2f(5), VCLIP_POWERUP_DISAPPEARANCE );
 
 	}
+#endif
 }
 
 //	------------------------------------------------------------------------------------------------------
@@ -901,9 +904,11 @@ int drop_powerup(int type, int id, int num, vms_vector *init_vel, vms_vector *po
 				switch (obj->id) {
 					case POW_MISSILE_1:
 					case POW_MISSILE_4:
+#ifdef NETWORK
 						if(Game_mode & GM_MULTI && Netgame.RespawnConcs) {
 							break;
 						}
+#endif
 					case POW_SHIELD_BOOST:
 					case POW_ENERGY:
 						obj->lifeleft = (d_rand() + F1_0*3) * 64;		//	Lives for 3 to 3.5 binary minutes (a binary minute is 64 seconds)

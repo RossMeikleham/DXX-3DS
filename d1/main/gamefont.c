@@ -112,6 +112,7 @@ void gamefont_choose_game_font(int scrx,int scry){
 		if (m<0)
 			Error("no gamefont found for %ix%i\n",scrx,scry);
 
+//TODO -- Enable font scaling for SDL
 #ifdef OGL
 	if (!GameArg.OglFixedFont)
 	{
@@ -173,11 +174,13 @@ void gamefont_init()
 	for (i=0;i<MAX_FONTS;i++){
 		Gamefonts[i]=NULL;
 
+#if 0
 		if (GameArg.GfxHiresFNTAvailable)
 			addfontconf(i,640,480,Gamefont_filenames_h[i]); // ZICO - addition to use D2 fonts if available
 		if (MacHog && (i != 0))
 			addfontconf(i,640,480,Gamefont_filenames_l[i]); // Mac fonts are hires (except for the "big" one)
 		else
+#endif
 			addfontconf(i,320,200,Gamefont_filenames_l[i]);
 	}
 

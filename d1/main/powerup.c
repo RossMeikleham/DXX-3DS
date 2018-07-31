@@ -247,8 +247,10 @@ int do_powerup(object *obj)
 		case POW_SHIELD_BOOST:
 			if (Players[Player_num].shields < MAX_SHIELDS) {
 				fix repair = 3*F1_0 + 3*F1_0*(NDL - Difficulty_level);
+#ifdef NETWORK
 				if (Game_mode & GM_MULTI)
 					multi_send_repair(repair, Players[Player_num].shields, OBJ_POWERUP);
+#endif
 
 				Players[Player_num].shields += repair;
 				if (Players[Player_num].shields > MAX_SHIELDS)
@@ -341,7 +343,9 @@ int do_powerup(object *obj)
 				if (vulcan_ammo_to_add_with_cannon < VULCAN_WEAPON_AMMO_AMOUNT) vulcan_ammo_to_add_with_cannon = VULCAN_WEAPON_AMMO_AMOUNT;
 				if ( (Game_mode & GM_MULTI) &&
 					 (!(Game_mode & GM_MULTI_COOP)) &&
+#ifdef NETWORK
 					 Netgame.LowVulcan &&
+#endif
 					 vulcan_ammo_to_add_with_cannon > VULCAN_WEAPON_AMMO_AMOUNT/2) 
 				{
 					vulcan_ammo_to_add_with_cannon = VULCAN_WEAPON_AMMO_AMOUNT/2;

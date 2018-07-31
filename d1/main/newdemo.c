@@ -3245,7 +3245,9 @@ void newdemo_stop_recording()
 		char testpath[PATH_MAX] = ""; 
 		int attemptnum = 2; 
 
+#ifdef NETWORK
 		sprintf(basename, "%s_%s_%s", p1, p2, Netgame.mission_name);
+#endif
 
 		sprintf(testpath, "%s%s%s", DEMO_DIR, basename, DEMO_EXT); 
 		while(PHYSFSX_exists(testpath, 0) && attemptnum < 20) {
