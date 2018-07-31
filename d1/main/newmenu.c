@@ -936,6 +936,7 @@ int newmenu_key_command(window *wind, d_event *event, newmenu *menu)
 				menu->items[old_choice].value = -1;
 			}
 			break;
+#ifndef __SWITCH__
 		case KEY_SPACEBAR:
 			if ( menu->citem > -1 )	{
 
@@ -972,6 +973,7 @@ int newmenu_key_command(window *wind, d_event *event, newmenu *menu)
 				}
 			}
 			break;
+#endif //__SWITCH__
 
 		case KEY_SHIFTED+KEY_UP:
 			if (menu->reorderitems && menu->citem!=0)
@@ -999,6 +1001,9 @@ int newmenu_key_command(window *wind, d_event *event, newmenu *menu)
 				changed = 1;
 			}
 			break;
+#ifdef __SWITCH__
+		case KEY_CTRLED+KEY_LCTRL:
+#endif
 		case KEY_ENTER:
 		case KEY_PADENTER:
 			if ( (menu->citem>-1) && (item->type==NM_TYPE_INPUT_MENU) && (item->group==0))	{
@@ -1026,6 +1031,9 @@ int newmenu_key_command(window *wind, d_event *event, newmenu *menu)
 			}
 			break;
 
+#ifdef __SWITCH__
+		case KEY_SPACEBAR:
+#endif
 		case KEY_ESC:
 			if ( (menu->citem>-1) && (item->type==NM_TYPE_INPUT_MENU) && (item->group==1))	{
 				item->group=0;
@@ -1873,6 +1881,9 @@ int listbox_key_command(window *wind, d_event *event, listbox *lb)
 		case KEY_PAD9:
 			lb->citem -= LB_ITEMS_ON_SCREEN;
 			break;
+#ifdef __SWITCH__
+		case KEY_SPACEBAR:
+#endif
 		case KEY_ESC:
 			if (lb->allow_abort_flag) {
 				lb->citem = -1;
@@ -1880,6 +1891,9 @@ int listbox_key_command(window *wind, d_event *event, listbox *lb)
 				return 1;
 			}
 			break;
+#ifdef __SWITCH__
+		case KEY_CTRLED+KEY_LCTRL:
+#endif
 		case KEY_ENTER:
 		case KEY_PADENTER:
 			// Tell callback, allow staying in menu
