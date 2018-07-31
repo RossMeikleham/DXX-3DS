@@ -8,7 +8,7 @@ A Nintendo Switch port of Descent I.  I hope to add support for Descent II in th
 - Copy `descent.hog` and `descent.pig` to the same directory.  These files are included with a purchase of the game.  Tested with [Descent from Steam](https://store.steampowered.com/app/273570/Descent/).
 
 ## Known issues and missing features
-- Savefiles can't be loaded or created
+- Multiple save files don't work (currently hardcoded to `player.plr`)
 - Doesn't support the joysticks
 - No music
 - Only tested with the Descent files from Steam; GOG and CD-ROM releases have not been tested
@@ -17,6 +17,7 @@ A Nintendo Switch port of Descent I.  I hope to add support for Descent II in th
 - Resize the text for larger resolutions
 - Enable the original HUD
 - Network/Multiplayer is not enabled
+- Level Selection menu doesn't work (no way to input a different level)
 
 ## Compile instructions
 

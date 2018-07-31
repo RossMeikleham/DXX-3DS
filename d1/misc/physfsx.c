@@ -231,6 +231,17 @@ char **PHYSFSX_findFiles(const char *path, const char *const *exts)
 #ifdef __SWITCH_DBG__
 	printf("\n");
 #endif
+
+// aagallag: Horrible hack...
+#define PLAYER_FNAME "player.plr"
+	if (strcmp(exts[0], ".plr") == 0)
+	{
+		char* player_fname = malloc(strlen(PLAYER_FNAME)+1);
+		memset(player_fname, '\x00', strlen(PLAYER_FNAME)+1);
+		strcpy(player_fname, PLAYER_FNAME);
+		if (PHYSFSX_exists(player_fname, 0))
+			*j++ = player_fname;
+	}
 	
 	*j = NULL;
 	list = realloc(list, (j - list + 1)*sizeof(char *));	// save a bit of memory (or a lot?)
@@ -303,8 +314,14 @@ int PHYSFSX_exists(const char *filename, int ignorecase)
 // Oh yeah, and I totally ignore the "ignorecase" arg
 int PHYSFSX_exists(const char *filename, int ignorecase)
 {
+	char filename2[PATH_MAX];
+	snprintf(filename2, sizeof(filename2), "%s", filename);
+	if (ignorecase)
+		PHYSFSEXT_locateCorrectCase(filename2);
+
+	PHYSFS_file *fp;
 	char **list = PHYSFS_enumerateFiles("");
-	char **i, **j = list;
+	char **i = list;
 
 	if (list == NULL){
 		// out of memory: not so good
@@ -313,10 +330,22 @@ int PHYSFSX_exists(const char *filename, int ignorecase)
 
 	for (i = list; *i; i++)
 	{
-		if (strcmp(filename, *i) == 0)
+		if (strcmp(filename2, *i) == 0) {
+			PHYSFS_freeList(list);
 			return 1;
+		}
 	}
-	return 0;
+	PHYSFS_freeList(list);
+
+	// aagallag: Hacky workaround
+	// The enumerateFiles() function seems to only enumerate files
+	// contained within descent.hog.  Let's just try and open
+	// the file.
+	fp = PHYSFS_openRead(filename2);
+	if (!fp)
+		return 0;
+	PHYSFS_close(fp);
+	return 1;
 }
 #endif
 

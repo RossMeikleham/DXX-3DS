@@ -86,8 +86,6 @@ static int locateOneElement(char *buf)
 
 int PHYSFSEXT_locateCorrectCase(char *buf)
 {
-// aagallag: TODO -- Fix this function for Switch
-#if 0
     int rc;
     char *ptr;
     char *prevptr;
@@ -110,9 +108,6 @@ int PHYSFSEXT_locateCorrectCase(char *buf)
 
     /* check final element... */
     return(locateOneElement(buf) ? 0 : -1);
-#else
-    return 0;
-#endif
 } /* PHYSFSEXT_locateCorrectCase */
 
 
