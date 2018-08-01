@@ -1,0 +1,25 @@
+before_install:
+  - wget https://github.com/devkitPro/pacman/releases/download/devkitpro-pacman-1.0.1/devkitpro-pacman.deb
+  - sudo dpkg -i devkitpro-pacman.deb
+  - source /etc/profile.d/devkit-env.sh
+  - export DEVKITA64=$DEVKITPRO/devkitA64
+  - sudo pacman -Syu
+  - sudo pacman -S switch-dev
+
+install:
+  - git clone git@github.com:aagallag/SDL-SWITCH.git -b master-aagallag
+  - cd SDL-SWITCH/
+  - make SDL
+  - cd SDL-1.2.15/
+  - make install
+  - cd ../
+  - make SDL_mixer
+  - cd SDL_mixer-1.2.12/
+  - make install
+  - cd ../../
+
+script:
+  - make
+  - cd d1/
+  - make dist-bin
+  - cd ../
