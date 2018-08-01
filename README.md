@@ -1,5 +1,7 @@
 # DXX Switch
 
+[![Build Status](https://travis-ci.org/aagallag/DXX-Switch.svg?branch=master)](https://travis-ci.org/aagallag/DXX-Switch)
+
 A Nintendo Switch port of Descent I.  I hope to add support for Descent II in the future.  This is a fork of [DXX-Retro](https://github.com/CDarrow/DXX-Retro), which is a fork of [DXX-Rebirth](https://github.com/dxx-rebirth/dxx-rebirth), which is a fork of the original engine source code created by Parallax Software Corporation.
 
 ## Install instructions
