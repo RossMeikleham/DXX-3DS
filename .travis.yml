@@ -19,11 +19,11 @@ install:
   - cd SDL-SWITCH/
   - make SDL
   - cd SDL-1.2.15/
-  - make install
+  - sudo make install
   - cd ../
   - make SDL_mixer
   - cd SDL_mixer-1.2.12/
-  - make install
+  - sudo make install
   - cd ../../
 
 script:
