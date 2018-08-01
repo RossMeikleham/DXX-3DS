@@ -53,7 +53,8 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DNDEBUG -DRELEASE -DNO_ASM -DUSE_SDLMIXER \
 			-DDXX_VERSION_MAJORi=$(VER_MAJOR) -DDXX_VERSION_MINORi=$(VER_MINOR) -DDXX_VERSION_MICROi=$(VER_MICRO) \
-			-Wno-deprecated-declarations #-D__SWITCH_DBG__
+			-DMAXIMUM_FPS=60 \
+			-Wno-deprecated-declarations
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
