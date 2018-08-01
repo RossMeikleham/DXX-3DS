@@ -15,7 +15,7 @@ install:
   - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -S switch-dev
   - source /etc/profile.d/devkit-env.sh
   - export DEVKITA64=$DEVKITPRO/devkitA64
-  - git clone git@github.com:aagallag/SDL-SWITCH.git -b master-aagallag
+  - git clone https://github.com/aagallag/SDL-SWITCH.git -b master-aagallag
   - cd SDL-SWITCH/
   - make SDL
   - cd SDL-1.2.15/
