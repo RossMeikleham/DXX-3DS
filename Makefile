@@ -3,11 +3,15 @@ all: physfs d1 d2
 physfs:
 	@$(MAKE) -C physfs
 
-d1:
+d1: physfs
 	@$(MAKE) -C d1
 
-d2:
+d2: physfs
 	@$(MAKE) -C d2
+
+dist-bin: d1 d2
+	@$(MAKE) -C d1 dist-bin
+	@$(MAKE) -C d2 dist-bin
 
 clean:
 	@$(MAKE) -C physfs clean
