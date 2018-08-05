@@ -184,6 +184,29 @@ extern void key_toggle_repeat(int enable);
 
 #define KEY_PAUSE			0x61
 
+#ifdef __SWITCH__
+#define NX_KEY_A        SDLK_a
+#define NX_KEY_B        SDLK_b
+#define NX_KEY_X        SDLK_x
+#define NX_KEY_Y        SDLK_y
+
+#define NX_KEY_LSTICK   SDLK_LSHIFT
+#define NX_KEY_RSTICK   SDLK_RSHIFT
+
+#define NX_KEY_L        SDLK_l
+#define NX_KEY_R        SDLK_r
+#define NX_KEY_ZL       SDLK_j
+#define NX_KEY_ZR       SDLK_k
+
+#define NX_KEY_MINUS    SDLK_MINUS
+#define NX_KEY_PLUS     SDLK_PLUS
+
+#define NX_KEY_LEFT     SDLK_LEFT
+#define NX_KEY_UP       SDLK_UP
+#define NX_KEY_RIGHT    SDLK_RIGHT
+#define NX_KEY_DOWN     SDLK_DOWN
+#endif
+
 typedef struct key_props {
 	const char *key_text;
 	unsigned char ascii_value;
