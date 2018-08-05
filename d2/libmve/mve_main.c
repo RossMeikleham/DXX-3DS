@@ -1,4 +1,7 @@
 
+// Don't compile this file on switch
+#ifndef __SWITCH__
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -182,3 +185,4 @@ static int doPlay(const char *filename)
 
 	return 0;
 }
+#endif // __SWITCH__

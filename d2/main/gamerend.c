@@ -766,7 +766,9 @@ void game_render_frame_mono(int flip)
 		render_frame(0, 0);
 
 		wake_up_rendered_objects(Viewer, 0);
+#ifdef NETWORK
 		show_HUD_names();
+#endif
 
 		Viewer = viewer_save;
 

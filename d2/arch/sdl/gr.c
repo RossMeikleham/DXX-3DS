@@ -91,15 +91,14 @@ int gr_set_mode(u_int32_t mode)
 {
 	unsigned int w, h;
 
-	if (mode<=0)
-		return 0;
-
-	w=SM_W(mode);
-	h=SM_H(mode);
+	w = 1280;
+	h = 720;
 	screen=NULL;
 
+#ifndef __SWITCH__
 	SDL_WM_SetCaption(DESCENT_VERSION, "Descent II");
 	SDL_WM_SetIcon( SDL_LoadBMP( "d2x-rebirth.bmp" ), NULL );
+#endif
 
 	if(SDL_VideoModeOK(w,h,GameArg.DbgBpp,sdl_video_flags))
 	{

@@ -37,6 +37,10 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include <sys/types.h>
 #endif
 
+#ifdef __SWITCH__
+#include <switch.h>
+#endif
+
 #include "pstypes.h"
 #include "strutil.h"
 #include "console.h"
@@ -291,6 +295,20 @@ int standard_handler(d_event *event)
 	return 0;
 }
 
+#ifdef __SWITCH_DBG__
+void switch_init()
+{
+	gfxInitDefault();
+	consoleInit(NULL);
+	printf("\x1b[16;20HHello World!\n");
+}
+
+void switch_end()
+{
+	gfxExit();
+}
+#endif //__SWITCH__
+
 jmp_buf LeaveEvents;
 #define PROGNAME argv[0]
 
@@ -299,8 +317,11 @@ jmp_buf LeaveEvents;
 
 int main(int argc, char *argv[])
 {
+#ifdef __SWITCH_DBG__
+	switch_init();
+#endif
 	mem_init();
-#ifdef __LINUX__
+#if defined(__LINUX__) || defined(__SWITCH__)
 	error_init(NULL);
 #else
 	error_init(msgbox_error);

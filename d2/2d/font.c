@@ -1167,13 +1167,11 @@ void gr_remap_font( grs_font *font, char * fontname, char *font_data )
 		int freq[256];
 
 		PHYSFS_read(fontfile,palette,3,256);		//read the palette
-
 		build_colormap_good( (ubyte *)&palette, colormap, freq );
 
 		colormap[TRANSPARENCY_COLOR] = TRANSPARENCY_COLOR;              // changed from colormap[255] = 255 to this for macintosh
 
 		decode_data(font->ft_data, ptr - font->ft_data, colormap, freq );
-
 	}
 
 	PHYSFS_close(fontfile);

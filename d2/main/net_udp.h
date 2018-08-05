@@ -4,6 +4,8 @@
  *
  */
 
+#ifdef NETWORK
+
 #include "multi.h"
 
 // Exported functions
@@ -169,3 +171,4 @@ typedef struct connection_status {
 	ubyte holepunch_attempts; 
 	fix64 last_direct_pong; 
 } connection_status;
+#endif // NETWORK

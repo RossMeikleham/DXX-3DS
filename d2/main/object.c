@@ -241,7 +241,9 @@ void draw_object_blob(object *obj,bitmap_index bmi)
 		obj->id == PLAYER_SMART_HOMING_ID &&
 		obj->ctype.laser_info.parent_num == Players[Player_num].objnum) {
 
+#if defined(OGL) || defined(OGL_ES)
 		g3_draw_bitmap_colorwarp(&pos,fixmuldiv(obj->size,bm->bm_w,bm->bm_h),obj->size,bm, 0.0, 0.4, 0.0);
+#endif
 
 	} else {
 		if (bm->bm_w > bm->bm_h)

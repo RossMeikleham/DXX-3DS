@@ -2456,7 +2456,9 @@ void show_mousefs_indicator(int mx, int my, int mz, int x, int y, int size)
 }
 
 
-extern struct connection_status connection_statuses[]; 
+#ifdef NETWORK
+extern struct connection_status connection_statuses[];
+#endif
 
 void fontcolor_bad() {
 	gr_set_fontcolor(BM_XRGB(25, 0, 0), -1);
@@ -2705,6 +2707,7 @@ void hud_show_kill_list()
 				gr_printf(loss_downx,y,"% 3d%%", loss_down);
 			}
 
+#ifdef NETWORK
 			if(connection_statuses[player_num].type == PROXY) {
 				fontcolor_bad();
 
@@ -2714,6 +2717,7 @@ void hud_show_kill_list()
 					gr_printf(loss_upx,y,"P");
 				}
 			}
+#endif
 		
 		}
 
@@ -2915,7 +2919,9 @@ void draw_hud()
 	//	Show other stuff if not in rearview or letterbox.
 	if (!Rear_view && PlayerCfg.CockpitMode[1]!=CM_REAR_VIEW)
 	{
+#ifdef NETWORK
 		show_HUD_names();
+#endif
 
 		if (PlayerCfg.CockpitMode[1]==CM_STATUS_BAR || PlayerCfg.CockpitMode[1]==CM_FULL_SCREEN)
 			hud_show_homing_warning();
@@ -2937,18 +2943,22 @@ void draw_hud()
 			show_time();
 #endif
 
+#ifdef NETWORK
 		if (PlayerCfg.CockpitMode[1] != CM_LETTERBOX && PlayerCfg.CockpitMode[1] != CM_REAR_VIEW)
 		{
 			hud_show_flag();
 			hud_show_orbs();
 		}
+#endif
 		
 		HUD_render_message_frame();
 
 		if (PlayerCfg.CockpitMode[1]!=CM_STATUS_BAR)
 			hud_show_lives();
+#ifdef NETWORK
 		if (Game_mode&GM_MULTI && Show_kill_list)
 			hud_show_kill_list();
+#endif
 		if (PlayerCfg.CockpitMode[1] != CM_LETTERBOX)
 			show_reticle(PlayerCfg.ReticleType, 1);
 		if (PlayerCfg.CockpitMode[1] != CM_LETTERBOX && Newdemo_state != ND_STATE_PLAYBACK && (PlayerCfg.MouseControlStyle == MOUSE_CONTROL_FLIGHT_SIM) && PlayerCfg.MouseFSIndicator)

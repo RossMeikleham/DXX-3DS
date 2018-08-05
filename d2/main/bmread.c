@@ -18,6 +18,8 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
  *
  */
 
+#ifdef EDITOR
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -2244,3 +2246,4 @@ void bm_write_extra_robots()
 
 	PHYSFS_close(fp);
 }
+#endif // EDITOR

@@ -19,148 +19,27 @@
 #include "object.h"
 #include "newdemo.h"
 
-// Initialise PhysicsFS, set up basic search paths and add arguments from .ini file.
-// The .ini file can be in either the user directory or the same directory as the program.
-// The user directory is searched first.
+// Initialise PhysicsFS
 void PHYSFSX_init(int argc, char *argv[])
 {
-#if defined(__unix__) || defined(__APPLE__) || defined(__MACH__)
-	char fullPath[PATH_MAX + 5];
-#endif
-#if defined(__unix__)
-	char *path = NULL;
-#endif
-#ifdef macintosh	// Mac OS 9
-	char base_dir[PATH_MAX];
-	int bundle = 0;
-#else
-#define base_dir PHYSFS_getBaseDir()
-#endif
-	
-	PHYSFS_init(argv[0]);
+	char hog[PATH_MAX];
+	int ret = PHYSFS_init(argv[0]);
+	if (ret != 1)
+		Error("Failed to init PHYSFS....\n");
 	PHYSFS_permitSymbolicLinks(1);
-	
-#ifdef macintosh
-	strcpy(base_dir, PHYSFS_getBaseDir());
-	if (strstr(base_dir, ".app:Contents:MacOSClassic"))	// the Mac OS 9 program is still in the .app bundle
-	{
-		char *p;
-		
-		bundle = 1;
-		if (base_dir[strlen(base_dir) - 1] == ':')
-			base_dir[strlen(base_dir) - 1] = '\0';
-		p = strrchr(base_dir, ':'); *p = '\0';	// path to 'Contents'
-		p = strrchr(base_dir, ':'); *p = '\0';	// path to bundle
-		p = strrchr(base_dir, ':'); *p = '\0';	// path to directory containing bundle
-	}
-#endif
-	
-#if (defined(__APPLE__) && defined(__MACH__))	// others?
-	chdir(base_dir);	// make sure relative hogdir paths work
-#endif
-	
-#if defined(__unix__)
-# if !(defined(__APPLE__) && defined(__MACH__))
-	path = "~/.d2x-rebirth/";
-# else
-	path = "~/Library/Preferences/D2X Rebirth/";
-# endif
-	
-	if (path[0] == '~') // yes, this tilde can be put before non-unix paths.
-	{
-		const char *home = PHYSFS_getUserDir();
-		
-		strcpy(fullPath, home); // prepend home to the path
-		path++;
-		if (*path == *PHYSFS_getDirSeparator())
-			path++;
-		strncat(fullPath, path, PATH_MAX + 5 - strlen(home));
-	}
-	else
-		strncpy(fullPath, path, PATH_MAX + 5);
-	
-	PHYSFS_setWriteDir(fullPath);
-	if (!PHYSFS_getWriteDir())
-	{                                               // need to make it
-		char *p;
-		char ancestor[PATH_MAX + 5];    // the directory which actually exists
-		char child[PATH_MAX + 5];               // the directory relative to the above we're trying to make
-		
-		strcpy(ancestor, fullPath);
-		while (!PHYSFS_getWriteDir() && ((p = strrchr(ancestor, *PHYSFS_getDirSeparator()))))
-		{
-			if (p[1] == 0)
-			{                                       // separator at the end (intended here, for safety)
-				*p = 0;                 // kill this separator
-				if (!((p = strrchr(ancestor, *PHYSFS_getDirSeparator()))))
-					break;          // give up, this is (usually) the root directory
-			}
-			
-			p[1] = 0;                       // go to parent
-			PHYSFS_setWriteDir(ancestor);
-		}
-		
-		strcpy(child, fullPath + strlen(ancestor));
-		for (p = child; (p = strchr(p, *PHYSFS_getDirSeparator())); p++)
-			*p = '/';
-		PHYSFS_mkdir(child);
-		PHYSFS_setWriteDir(fullPath);
-	}
-	
-	PHYSFS_addToSearchPath(PHYSFS_getWriteDir(), 1);
-#endif
-	
-	PHYSFS_addToSearchPath(base_dir, 1);
+
+	// Add base directory
+	PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 0);
+
+	// Set write dir and init args
+	PHYSFS_setWriteDir(PHYSFS_getBaseDir());
 	InitArgs( argc,argv );
-	PHYSFS_removeFromSearchPath(base_dir);
-	
-	if (!PHYSFS_getWriteDir())
-	{
-		PHYSFS_setWriteDir(base_dir);
-		if (!PHYSFS_getWriteDir())
-			Error("can't set write dir: %s\n", PHYSFS_getLastError());
-		else
-			PHYSFS_addToSearchPath(PHYSFS_getWriteDir(), 0);
-	}
-	
-	//tell PHYSFS where hogdir is
-	if (GameArg.SysHogDir)
-		PHYSFS_addToSearchPath(GameArg.SysHogDir,1);
-#if defined(__unix__)
-	else if (!GameArg.SysNoHogDir)
-		PHYSFS_addToSearchPath(SHAREPATH, 1);
-#endif
-	
-	PHYSFSX_addRelToSearchPath("data", 1);	// 'Data' subdirectory
-	
-	// For Macintosh, add the 'Resources' directory in the .app bundle to the searchpaths
-#if defined(__APPLE__) && defined(__MACH__)
-	{
-		ProcessSerialNumber psn = { 0, kCurrentProcess };
-		FSRef fsref;
-		OSStatus err;
-		
-		err = GetProcessBundleLocation(&psn, &fsref);
-		if (err == noErr)
-			err = FSRefMakePath(&fsref, (ubyte *)fullPath, PATH_MAX);
-		
-		if (err == noErr)
-		{
-			strncat(fullPath, "/Contents/Resources/", PATH_MAX + 4 - strlen(fullPath));
-			fullPath[PATH_MAX + 4] = '\0';
-			PHYSFS_addToSearchPath(fullPath, 1);
-		}
-	}
-#elif defined(macintosh)
-	if (bundle)
-	{
-		base_dir[strlen(base_dir)] = ':';	// go back in the bundle
-		base_dir[strlen(base_dir)] = ':';	// go back in 'Contents'
-		strncat(base_dir, ":Resources:", PATH_MAX - 1 - strlen(base_dir));
-		base_dir[PATH_MAX - 1] = '\0';
-		PHYSFS_addToSearchPath(base_dir, 1);
-	}
-#endif
+
+	// Add hog file
+	memset(hog, '\x00', PATH_MAX);
+	strcpy(hog, PHYSFS_getBaseDir());
+	strcat(hog, "descent2.hog");
+	PHYSFS_addToSearchPath(hog, 0);
 }
 
 // Add a searchpath, but that searchpath is relative to an existing searchpath
@@ -223,6 +102,7 @@ void PHYSFSX_listSearchPathContent()
 	list = PHYSFS_enumerateFiles("");
 	for (i = list; *i != NULL; i++)
 		con_printf(CON_DEBUG, "PHYSFS: * We've got [%s].\n", *i);
+
 	PHYSFS_freeList(list);
 	
 	con_printf(CON_DEBUG, "\n");
@@ -400,6 +280,7 @@ PHYSFS_sint64 PHYSFSX_getFreeDiskSpace()
 }
 #endif
 
+#if 0
 int PHYSFSX_exists(const char *filename, int ignorecase)
 {
 	char filename2[PATH_MAX];
@@ -412,6 +293,46 @@ int PHYSFSX_exists(const char *filename, int ignorecase)
 
 	return PHYSFS_exists(filename2);
 }
+#else
+// PHYSFS_exists is broken on switch for some reason...
+// So I have re-implemented my own solution
+// Oh yeah, and I totally ignore the "ignorecase" arg
+int PHYSFSX_exists(const char *filename, int ignorecase)
+{
+	char filename2[PATH_MAX];
+	snprintf(filename2, sizeof(filename2), "%s", filename);
+	if (ignorecase)
+		PHYSFSEXT_locateCorrectCase(filename2);
+
+	PHYSFS_file *fp;
+	char **list = PHYSFS_enumerateFiles("");
+	char **i = list;
+
+	if (list == NULL){
+		// out of memory: not so good
+		Error("PHYSFS_enumerateFiles returned null...\n");
+	}
+
+	for (i = list; *i; i++)
+	{
+		if (strcmp(filename2, *i) == 0) {
+			PHYSFS_freeList(list);
+			return 1;
+		}
+	}
+	PHYSFS_freeList(list);
+
+	// aagallag: Hacky workaround
+	// The enumerateFiles() function seems to only enumerate files
+	// contained within descent.hog.  Let's just try and open
+	// the file.
+	fp = PHYSFS_openRead(filename2);
+	if (!fp)
+		return 0;
+	PHYSFS_close(fp);
+	return 1;
+}
+#endif
 
 //Open a file for reading, set up a buffer
 PHYSFS_file *PHYSFSX_openReadBuffered(const char *filename)

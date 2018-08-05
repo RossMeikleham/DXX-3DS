@@ -73,7 +73,7 @@ typedef ubyte bool;
 defined(__arm__) || defined(ARM) || \
 (defined(__mips__) && defined(__MIPSEL__)) || \
 defined(__SYMBIAN32__) || \
-defined(__x86_64__) || \
+defined(__x86_64__) || defined(__SWITCH__) || \
 defined(__LITTLE_ENDIAN__)	// from physfs_internal.h
 //# define WORDS_BIGENDIAN 0
 #else

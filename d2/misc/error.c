@@ -67,6 +67,12 @@ void Error(const char *fmt,...)
 	char exit_message[MAX_MSG_LEN]="Error: "; // don't put the new line in for dialog output
 	va_list arglist;
 
+#ifdef __SWITCH__
+#ifndef __SWITCH_DBG__
+	consoleInit(NULL);
+#endif
+#endif
+
 	va_start(arglist,fmt);
 	vsprintf(exit_message+strlen(exit_message),fmt,arglist);
 	va_end(arglist);
@@ -75,6 +81,11 @@ void Error(const char *fmt,...)
 
 	print_exit_message(exit_message);
 
+#ifdef __SWITCH__
+	printf("Press the home button to exit...\n");
+	while (1)
+		svcSleepThread(10000000000UL);
+#endif
 	exit(1);
 }
 

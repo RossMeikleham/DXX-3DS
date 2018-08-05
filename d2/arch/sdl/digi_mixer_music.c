@@ -105,6 +105,7 @@ int mix_play_file(char *filename, int loop, void (*hook_finished_track)())
 	{
 		con_printf(CON_CRITICAL,"Music %s could not be loaded: %s\n", filename, Mix_GetError());
 		mix_stop_music();
+		printf("Music stopped....\n");
 	}
 
 	return 0;

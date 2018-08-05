@@ -54,7 +54,11 @@ void con_printf(int priority, const char *fmt, ...)
 
 	memset(buffer,'\0',CON_LINE_LENGTH);
 
+#ifdef __SWITCH_DBG__
+	if (1)
+#else
 	if (priority <= ((int)GameArg.DbgVerbose))
+#endif
 	{
 		char *p1, *p2;
 

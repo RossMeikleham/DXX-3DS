@@ -4,6 +4,8 @@
  * 
  */
 
+#ifdef NETWORK
+
 #ifdef HAVE_CONFIG_H
 #include <conf.h>
 #endif
@@ -6758,3 +6760,4 @@ int net_udp_show_game_info()
 	else
 		return 0;
 }
+#endif // NETWORK

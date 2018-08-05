@@ -25,10 +25,12 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "window.h"
 #include "vecmat.h"
 
+#ifndef MAXIMUM_FPS
 #ifdef NDEBUG
 #define MAXIMUM_FPS 200
 #else
 #define MAXIMUM_FPS 1000
+#endif
 #endif
 
 struct object;
