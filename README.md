@@ -22,7 +22,7 @@ A Nintendo Switch port of Descent I & Descent II.  This is a fork of [DXX-Retro]
 - Only tested with the Descent files from Steam; GOG and CD-ROM releases have not been tested
 - Doesn't utilize 1080p resolution when docked
 - Need an icon
-- Resize the text for larger resolutions
+- Resize the text for larger resolutions (Bug only on D1X Switch)
 - Enable the original HUD
 - Network/Multiplayer is not enabled
 - Level Selection menu doesn't work (no way to input a different level)
