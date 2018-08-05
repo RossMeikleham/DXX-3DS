@@ -227,6 +227,17 @@ char **PHYSFSX_findFiles(const char *path, const char *const *exts)
 		else
 			free(*i);
 	}
+
+// aagallag: Horrible hack...
+#define PLAYER_FNAME "player.plr"
+	if (strcmp(exts[0], ".plr") == 0)
+	{
+		char* player_fname = malloc(strlen(PLAYER_FNAME)+1);
+		memset(player_fname, '\x00', strlen(PLAYER_FNAME)+1);
+		strcpy(player_fname, PLAYER_FNAME);
+		if (PHYSFSX_exists(player_fname, 0))
+			*j++ = player_fname;
+	}
 	
 	*j = NULL;
 	list = realloc(list, (j - list + 1)*sizeof(char *));	// save a bit of memory (or a lot?)
