@@ -817,7 +817,11 @@ int do_new_game_menu()
 			m[1].type=NM_TYPE_INPUT; m[1].text_len = 10; m[1].text = num_text;
 			n_items = 2;
 
+#ifdef __SWITCH__
+			snprintf(num_text, 10, "%d", player_highest_level);
+#else
 			strcpy(num_text,"1");
+#endif
 
 			choice = newmenu_do( NULL, TXT_SELECT_START_LEV, n_items, m, NULL, NULL );
 
