@@ -23,6 +23,14 @@ void arch_close(void)
 
 	mouse_close();
 
+// aagallag: TODO -- Fix bug so we can gracefully exit
+#ifdef __SWITCH__
+	consoleInit(NULL);
+	printf("Press the home button to exit...\n");
+	while (1)
+		svcSleepThread(10000000000UL);
+#endif
+
 	if (!GameArg.SndNoSound)
 	{
 		digi_close();
