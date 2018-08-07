@@ -40,7 +40,7 @@ APP_TITLE	:=	D1X Switch
 APP_AUTHOR	:=	aagallag
 VER_MAJOR	:=	0
 VER_MINOR	:=	58
-VER_MICRO	:=	5
+VER_MICRO	:=	6
 APP_VERSION	:=	$(VER_MAJOR).$(VER_MINOR).$(VER_MICRO)
 
 #---------------------------------------------------------------------------------
