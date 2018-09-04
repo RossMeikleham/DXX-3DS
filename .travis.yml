@@ -30,4 +30,6 @@ script:
   - make
   - cd d1/
   - make dist-bin
+  - cd ../d2/
+  - make dist-bin
   - cd ../
