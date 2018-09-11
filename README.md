@@ -44,7 +44,15 @@ And the following Pacman dependencies are required:
 sudo pacman -Syu switch-dev switch-pkg-config devkitpro-pkgbuild-helpers switch-libvorbisidec switch-libmikmod switch-flac switch-libogg
 ```
 
-Start by compiling and installing SDL-1.2 and SDL_mixer for libnx
+1. Install pre-compiled SDL and SDL_mixer (Easier)
+```
+wget https://github.com/aagallag/pacman-packages/releases/download/v1.0/switch-sdl-1.2.15-1-any.pkg.tar.xz
+sudo pacman -U switch-sdl-1.2.15-1-any.pkg.tar.xz
+wget https://github.com/aagallag/pacman-packages/releases/download/v1.0/switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
+sudo pacman -U switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
+```
+
+2. Compile SDL and SDL_mixer manually
 ```
 git clone git@github.com:aagallag/pacman-packages.git -b switch-sdl-1.2_aagallag
 cd pacman-packages/
@@ -56,7 +64,7 @@ cd ../SDL_mixer
 sudo pacman -U switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
 ```
 
-Then compile DXX Switch.
+Finally, compile DXX Switch.
 ```
 git clone --recurse-submodules git@github.com:aagallag/DXX-Switch.git
 cd DXX-Switch/
