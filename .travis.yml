@@ -15,16 +15,10 @@ install:
   - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -S switch-dev switch-libvorbisidec switch-libmikmod switch-flac switch-libogg
   - source /etc/profile.d/devkit-env.sh
   - export DEVKITA64=$DEVKITPRO/devkitA64
-  - git clone https://github.com/aagallag/SDL-SWITCH.git -b master-aagallag
-  - cd SDL-SWITCH/
-  - make SDL
-  - cd SDL-1.2.15/
-  - sudo make install
-  - cd ../
-  - make SDL_mixer
-  - cd SDL_mixer-1.2.12/
-  - sudo make install
-  - cd ../../
+  - wget https://github.com/aagallag/pacman-packages/releases/download/v1.0/switch-sdl-1.2.15-1-any.pkg.tar.xz
+  - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -U switch-sdl-1.2.15-1-any.pkg.tar.xz
+  - wget https://github.com/aagallag/pacman-packages/releases/download/v1.0/switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
+  - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -U switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
 
 script:
   - make
