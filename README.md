@@ -34,17 +34,26 @@ A Nintendo Switch port of Descent I & Descent II.  This is a fork of [DXX-Retro]
 
 ### Linux Compile Instructions
 
+You will likely need these Linux package dependencies to compile the SDL pacman packages(`libarchive-tools curl autoconf`). Debian/Ubuntu install instructions provided:
+```
+sudo apt install libarchive-tools curl autoconf bsdtar patch
+```
+
+And the following Pacman dependencies are required:
+```
+sudo pacman -Syu switch-dev switch-pkg-config devkitpro-pkgbuild-helpers switch-libvorbisidec switch-libmikmod switch-flac switch-libogg
+```
+
 Start by compiling and installing SDL-1.2 and SDL_mixer for libnx
 ```
-git clone git@github.com:aagallag/SDL-SWITCH.git -b master-aagallag
-cd SDL-SWITCH/
-make SDL
-cd SDL-1.2.15/
-make install
-cd ../
-make SDL_mixer
-cd SDL_mixer-1.2.12/
-make install
+git clone git@github.com:aagallag/pacman-packages.git -b switch-sdl-1.2_aagallag
+cd pacman-packages/
+cd switch/SDL/
+/opt/devkitpro/pacman/bin/makepkg
+sudo pacman -U switch-sdl-1.2.15-1-any.pkg.tar.xz
+cd ../SDL_mixer
+/opt/devkitpro/pacman/bin/makepkg
+sudo pacman -U switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
 ```
 
 Then compile DXX Switch.

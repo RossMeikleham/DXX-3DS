@@ -12,7 +12,7 @@ install:
   - wget https://github.com/devkitPro/pacman/releases/download/devkitpro-pacman-1.0.1/devkitpro-pacman.deb
   - sudo dpkg -i devkitpro-pacman.deb
   - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -Syu
-  - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -S switch-dev
+  - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -S switch-dev switch-libvorbisidec switch-libmikmod switch-flac switch-libogg
   - source /etc/profile.d/devkit-env.sh
   - export DEVKITA64=$DEVKITPRO/devkitA64
   - git clone https://github.com/aagallag/SDL-SWITCH.git -b master-aagallag
