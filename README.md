@@ -50,7 +50,7 @@ make install
 Then compile DXX Switch.
 ```
 git clone --recurse-submodules git@github.com:aagallag/DXX-Switch.git
-cd switch-descent/
+cd DXX-Switch/
 make
 ```
 
