@@ -280,7 +280,6 @@ PHYSFS_sint64 PHYSFSX_getFreeDiskSpace()
 }
 #endif
 
-#if 0
 int PHYSFSX_exists(const char *filename, int ignorecase)
 {
 	char filename2[PATH_MAX];
@@ -293,46 +292,6 @@ int PHYSFSX_exists(const char *filename, int ignorecase)
 
 	return PHYSFS_exists(filename2);
 }
-#else
-// PHYSFS_exists is broken on switch for some reason...
-// So I have re-implemented my own solution
-// Oh yeah, and I totally ignore the "ignorecase" arg
-int PHYSFSX_exists(const char *filename, int ignorecase)
-{
-	char filename2[PATH_MAX];
-	snprintf(filename2, sizeof(filename2), "%s", filename);
-	if (ignorecase)
-		PHYSFSEXT_locateCorrectCase(filename2);
-
-	PHYSFS_file *fp;
-	char **list = PHYSFS_enumerateFiles("");
-	char **i = list;
-
-	if (list == NULL){
-		// out of memory: not so good
-		Error("PHYSFS_enumerateFiles returned null...\n");
-	}
-
-	for (i = list; *i; i++)
-	{
-		if (strcmp(filename2, *i) == 0) {
-			PHYSFS_freeList(list);
-			return 1;
-		}
-	}
-	PHYSFS_freeList(list);
-
-	// aagallag: Hacky workaround
-	// The enumerateFiles() function seems to only enumerate files
-	// contained within descent.hog.  Let's just try and open
-	// the file.
-	fp = PHYSFS_openRead(filename2);
-	if (!fp)
-		return 0;
-	PHYSFS_close(fp);
-	return 1;
-}
-#endif
 
 //Open a file for reading, set up a buffer
 PHYSFS_file *PHYSFSX_openReadBuffered(const char *filename)
