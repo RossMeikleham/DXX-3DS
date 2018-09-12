@@ -70,7 +70,7 @@ sudo pacman -U switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
 
 #### Compile DXX Switch.
 ```
-git clone --recurse-submodules git@github.com:aagallag/DXX-Switch.git
+git clone git@github.com:aagallag/DXX-Switch.git
 cd DXX-Switch/
 make
 ```
