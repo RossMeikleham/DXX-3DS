@@ -31,6 +31,7 @@ A Nintendo Switch port of Descent I & Descent II.  This is a fork of [DXX-Retro]
 
 ### Dependencies
 - [devkitPro/libnx](https://devkitpro.org/wiki/devkitPro_pacman)
+- [physfs-switch](https://github.com/carstene1ns/physfs-switch)
 
 ### Linux Compile Instructions
 
@@ -43,6 +44,9 @@ And the following Pacman dependencies are required:
 ```
 sudo pacman -Syu switch-dev switch-pkg-config devkitpro-pkgbuild-helpers switch-libvorbisidec switch-libmikmod switch-flac switch-libogg
 ```
+
+#### Install libphysfs for libnx
+Follow instructions from [physfs-switch](https://github.com/carstene1ns/physfs-switch) repo page.
 
 #### Option 1: Install pre-compiled SDL and SDL_mixer (Easier)
 ```

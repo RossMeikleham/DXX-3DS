@@ -67,7 +67,7 @@ LIBS	:= -lSDL_mixer -lSDL -lnx -lphysfs -lFLAC -lmikmod -lvorbisidec -logg -lm
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(LIBNX) $(CURDIR)/../physfs
+LIBDIRS	:= $(PORTLIBS) $(LIBNX)
 
 
 #---------------------------------------------------------------------------------
