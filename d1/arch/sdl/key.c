@@ -69,7 +69,7 @@ static const SDLKey keycodes_3ds[32] =
     SDLK_UNKNOWN,
     SDLK_UNKNOWN,
     SDLK_UNKNOWN,
-    SDLK_UNKNOWN,
+    SDLK_UNKNOWN
 };
 #endif
 
@@ -92,8 +92,8 @@ const key_props key_properties[256] = {
 { "BSPC",   255,    SDLK_BACKSPACE     },
 { "TAB",    255,    SDLK_TAB           },
 { "Q",      'q',    DS_KEY_LEFT             },
-{ "W",      'w',    DS_KEY_RIGHT             },
-{ "E",      'e',    SDLK_e             },
+{ "W",      'w',    SDLK_w             },
+{ "E",      'e',    DS_KEY_RIGHT             },
 { "R",      'r',    SDLK_r             },
 { "T",      't',    SDLK_t             }, // 20
 { "Y",      'y',    SDLK_y             },
@@ -332,7 +332,7 @@ const key_props key_properties[256] = {
 { "W94",    255,    SDLK_WORLD_94      },
 { "W95",    255,    SDLK_WORLD_95      }, // 255
 };
-#else
+/*#else
 const key_props key_properties[256] = {
 { "",       255,    -1                 }, // 0
 { "ESC",    255,    SDLK_ESCAPE        },
@@ -590,7 +590,7 @@ const key_props key_properties[256] = {
 { "W93",    255,    SDLK_WORLD_93      },
 { "W94",    255,    SDLK_WORLD_94      },
 { "W95",    255,    SDLK_WORLD_95      }, // 255
-};
+};*/
 #endif
 
 
@@ -658,7 +658,9 @@ void key_handler(SDL_KeyboardEvent *kevent)
 	
     // Read SDLK symbol and state
     #ifdef __3DS__
-    if (kevent->keysym.scancode < 32) {
+    // Analogue stick directions seems to activate keys 28-31 and cause
+    // some weird issues, throw these away, dealt with by the JOYSTICK handler
+    if (kevent->keysym.scancode < 28) {
         event_keysym = keycodes_3ds[kevent->keysym.scancode];
     } else {
         return;
