@@ -35,9 +35,48 @@ typedef struct keyboard	{
 static keyboard key_data;
 
 #ifdef __3DS__
+/* For some reason SDL keymappings aren't set by default */
+static const SDLKey keycodes_3ds[32] = 
+{
+    SDLK_a,
+    SDLK_b,
+    SDLK_ESCAPE,
+    SDLK_RETURN,
+    SDLK_RIGHT,
+    SDLK_LEFT,
+    SDLK_UP,
+    SDLK_DOWN,
+    SDLK_r,
+    SDLK_l,
+    SDLK_x,
+    SDLK_y,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_LSHIFT,
+    SDLK_RSHIFT,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+    SDLK_UNKNOWN,
+};
+#endif
+
+#ifdef __3DS__
 const key_props key_properties[256] = {
 { "",       255,    SDLK_UNKNOWN                 }, // 0
-{ "ESC",    255,    NX_KEY_PLUS        },
+{ "ESC",    255,    DS_KEY_SELECT        },
 { "1",      '1',    SDLK_1             },
 { "2",      '2',    SDLK_2             },
 { "3",      '3',    SDLK_3             },
@@ -52,9 +91,9 @@ const key_props key_properties[256] = {
 { "=",      '=',    SDLK_EQUALS        },
 { "BSPC",   255,    SDLK_BACKSPACE     },
 { "TAB",    255,    SDLK_TAB           },
-{ "Q",      'q',    SDLK_q             },
+{ "Q",      'q',    DS_KEY_LEFT             },
 { "W",      'w',    SDLK_w             },
-{ "E",      'e',    SDLK_e             },
+{ "E",      'e',    DS_KEY_RIGHT             },
 { "R",      'r',    SDLK_r             },
 { "T",      't',    SDLK_t             }, // 20
 { "Y",      'y',    SDLK_y             },
@@ -64,9 +103,9 @@ const key_props key_properties[256] = {
 { "P",      'p',    SDLK_p             },
 { "[",      '[',    SDLK_LEFTBRACKET   },
 { "]",      ']',    SDLK_RIGHTBRACKET  },
-{ "ENTER",  255,    NX_KEY_MINUS       },
-{ "LCTRL",  255,    NX_KEY_A           },
-{ "A",      'a',    NX_KEY_ZR          }, // 30
+{ "ENTER",  255,    DS_KEY_START       },
+{ "LCTRL",  255,    DS_KEY_A           },
+{ "A",      'a',    DS_KEY_R          }, // 30
 { "S",      's',    SDLK_s             },
 { "D",      'd',    SDLK_d             },
 { "F",      'f',    SDLK_f             },
@@ -80,7 +119,7 @@ const key_props key_properties[256] = {
 { "`",      '`',    SDLK_BACKQUOTE     },
 { "LSHFT",  255,    SDLK_LSHIFT        },
 { "\\",     '\\',   SDLK_BACKSLASH     },
-{ "Z",      'z',    NX_KEY_ZL          },
+{ "Z",      'z',    DS_KEY_L          },
 { "X",      'x',    SDLK_x             },
 { "C",      'c',    SDLK_c             },
 { "V",      'v',    SDLK_v             },
@@ -93,7 +132,7 @@ const key_props key_properties[256] = {
 { "RSHFT",  255,    SDLK_RSHIFT        },
 { "PAD*",   '*',    SDLK_KP_MULTIPLY   },
 { "LALT",   255,    SDLK_LALT          },
-{ "SPC",    ' ',    NX_KEY_B           },
+{ "SPC",    ' ',    DS_KEY_B           },
 { "CPSLK",  255,    SDLK_CAPSLOCK      },
 { "F1",     255,    SDLK_F1            },
 { "F2",     255,    SDLK_F2            }, // 60
@@ -236,15 +275,15 @@ const key_props key_properties[256] = {
 { "",       255,    SDLK_UNKNOWN                 },
 { "",       255,    SDLK_UNKNOWN                 },
 { "HOME",   255,    SDLK_HOME          },
-{ "UP",     255,    NX_KEY_UP          }, // 200
+{ "UP",     255,    DS_KEY_UP          }, // 200
 { "PGUP",   255,    SDLK_PAGEUP        },
 { "",       255,    SDLK_UNKNOWN                 },
-{ "LEFT",   255,    NX_KEY_LEFT        },
+{ "LEFT",   255,    SDLK_UNKNOWN        },
 { "",       255,    SDLK_UNKNOWN                 },
-{ "RIGHT",  255,    NX_KEY_RIGHT       },
+{ "RIGHT",  255,    SDLK_UNKNOWN       },
 { "",       255,    SDLK_UNKNOWN                 },
 { "END",    255,    SDLK_END           },
-{ "DOWN",   255,    NX_KEY_DOWN        },
+{ "DOWN",   255,    DS_KEY_DOWN        },
 { "PGDN",   255,    SDLK_PAGEDOWN      },
 { "INS",    255,    SDLK_INSERT        }, // 210
 { "DEL",    255,    SDLK_DELETE        },
@@ -616,12 +655,21 @@ unsigned char key_ascii()
 void key_handler(SDL_KeyboardEvent *kevent)
 {
 	int keycode, event_keysym=-1, key_state;
-
-	// Read SDLK symbol and state
+    
+    // Read SDLK symbol and state
+    #ifdef __3DS__
+    if (kevent->keysym.scancode < 32) {
+        event_keysym = keycodes_3ds[kevent->keysym.scancode];
+    } else {
+        return;
+    }
+    #else
         event_keysym = kevent->keysym.sym;
-		if (event_keysym == SDLK_UNKNOWN)
-			return;
-        key_state = (kevent->state == SDL_PRESSED)?1:0;
+    #endif
+   
+	if (event_keysym == SDLK_UNKNOWN)
+	    return;
+    key_state = (kevent->state == SDL_PRESSED)?1:0;
 
 	// fill the unicode frame-related unicode buffer 
 	if (key_state && kevent->keysym.unicode > 31 && kevent->keysym.unicode < 255)

@@ -193,7 +193,7 @@ void init_cockpit()
 		PlayerCfg.CockpitMode[1] = CM_FULL_SCREEN;
 
 #ifndef OGL
-	if ( Game_screen_mode != (GameArg.GfxHiresGFXAvailable? SM(640,480) : SM(320,200)) && PlayerCfg.CockpitMode[1] != CM_LETTERBOX) {
+	if ( Game_screen_mode != (GameArg.GfxHiresGFXAvailable? SM(640,480) : SM(400,200)) && PlayerCfg.CockpitMode[1] != CM_LETTERBOX) {
 		PlayerCfg.CockpitMode[1] = CM_FULL_SCREEN;
 	}
 #endif
