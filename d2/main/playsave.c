@@ -83,7 +83,11 @@ extern void InitWeaponOrdering();
 int new_player_config()
 {
 	InitWeaponOrdering (); //setup default weapon priorities
+#ifdef __3DS__
+    PlayerCfg.ControlType=CONTROL_USING_JOYSTICK; // Use 3DS Joypad
+#else
 	PlayerCfg.ControlType=0; // Assume keyboard
+#endif
 	memcpy(PlayerCfg.KeySettings, DefaultKeySettings, sizeof(DefaultKeySettings));
 	memcpy(PlayerCfg.KeySettingsD2X, DefaultKeySettingsD2X, sizeof(DefaultKeySettingsD2X));
 	kc_set_controls();
@@ -453,6 +457,10 @@ int read_player_d2x(char *filename)
 	}
 
 	PHYSFS_close(f);
+
+#ifdef __3DS__
+    PlayerCfg.ControlType |= CONTROL_USING_JOYSTICK;
+#endif
 
 	return rc;
 }

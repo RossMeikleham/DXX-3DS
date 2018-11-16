@@ -52,11 +52,13 @@ void event_poll()
 				mouse_motion_handler((SDL_MouseMotionEvent *)&event);
 				idle = 0;
 				break;
+#ifndef __3DS__
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
 				joy_button_handler((SDL_JoyButtonEvent *)&event);
 				idle = 0;
 				break;
+#endif
 			case SDL_JOYAXISMOTION:
 				if (joy_axis_handler((SDL_JoyAxisEvent *)&event))
 					idle = 0;

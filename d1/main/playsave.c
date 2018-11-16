@@ -68,7 +68,11 @@ int new_player_config()
 		saved_games[i].name[0] = 0;
 
 	InitWeaponOrdering (); //setup default weapon priorities
+#ifdef __3DS__
+    PlayerCfg.ControlType=CONTROL_USING_JOYSTICK; // Use 3DS Joypad
+#else
 	PlayerCfg.ControlType=0; // Assume keyboard
+#endif
 	memcpy(PlayerCfg.KeySettings, DefaultKeySettings, sizeof(DefaultKeySettings));
 	memcpy(PlayerCfg.KeySettingsD1X, DefaultKeySettingsD1X, sizeof(DefaultKeySettingsD1X));
 	kc_set_controls();
@@ -932,6 +936,10 @@ int read_player_file()
 		if (PHYSFS_read(file,PlayerCfg.HighestLevels,sizeof(hli),PlayerCfg.NHighestLevels) != PlayerCfg.NHighestLevels)
 			goto read_player_file_failed;
 	}
+
+#ifdef __3DS__
+    PlayerCfg.ControlType |= CONTROL_USING_JOYSTICK;
+#endif
 
 	if ( saved_game_version != 7 ) {	// Read old & SW saved games.
 		if (PHYSFS_read(file,saved_games,sizeof(saved_games),1) != 1)
