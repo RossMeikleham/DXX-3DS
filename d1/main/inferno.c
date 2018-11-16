@@ -31,7 +31,7 @@ char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE CORPORAT
 #include <limits.h>
 #include <SDL/SDL.h>
 
-#ifdef __SWITCH__
+#ifdef __3DS__
 #include <3ds.h>
 
 const unsigned int __stacksize__ = 8 * 1024 * 1024; // 8MB
@@ -299,7 +299,7 @@ jmp_buf LeaveEvents;
 int main(int argc, char *argv[])
 {
 
-#ifdef __SWITCH__
+#ifdef __3DS__
     mcuHwcInit();
     gfxInitDefault();
 

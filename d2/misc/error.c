@@ -67,8 +67,8 @@ void Error(const char *fmt,...)
 	char exit_message[MAX_MSG_LEN]="Error: "; // don't put the new line in for dialog output
 	va_list arglist;
 
-#ifdef __SWITCH__
-#ifndef __SWITCH_DBG__
+#ifdef __3DS__
+#ifndef __3DS_DBG__
 	consoleInit(NULL);
 #endif
 #endif
@@ -81,7 +81,7 @@ void Error(const char *fmt,...)
 
 	print_exit_message(exit_message);
 
-#ifdef __SWITCH__
+#ifdef __3DS__
 	printf("Press the home button to exit...\n");
 	while (1)
 		svcSleepThread(10000000000UL);

@@ -184,7 +184,7 @@ extern void key_toggle_repeat(int enable);
 
 #define KEY_PAUSE			0x61
 
-#ifdef __SWITCH__
+#ifdef __3DS__
 #define NX_KEY_A        SDLK_a
 #define NX_KEY_B        SDLK_b
 #define NX_KEY_X        SDLK_x

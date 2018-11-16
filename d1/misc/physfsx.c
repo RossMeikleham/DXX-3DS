@@ -23,7 +23,7 @@
 void PHYSFSX_init(int argc, char *argv[])
 {
 	char hog[PATH_MAX];
-#ifdef __SWITCH__
+#ifdef __3DS__
     int ret = PHYSFS_init("/3ds/D1/");
 #else	
     int ret = PHYSFS_init(argv[0]);
@@ -215,12 +215,12 @@ char **PHYSFSX_findFiles(const char *path, const char *const *exts)
 	if (list == NULL)
 		return NULL;	// out of memory: not so good
 	
-#ifdef __SWITCH_DBG__
+#ifdef __3DS_DBG__
 	printf("PHYSFSX_findFiles: ");
 #endif
 	for (i = list; *i; i++)
 	{
-#ifdef __SWITCH_DBG__
+#ifdef __3DS_DBG__
 		printf("%s ", *i);
 #endif
 		ext = strrchr(*i, '.');
@@ -232,7 +232,7 @@ char **PHYSFSX_findFiles(const char *path, const char *const *exts)
 		else
 			free(*i);
 	}
-#ifdef __SWITCH_DBG__
+#ifdef __3DS_DBG__
 	printf("\n");
 #endif
 	

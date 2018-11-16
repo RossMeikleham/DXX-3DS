@@ -4,7 +4,7 @@
  *
  */
 
-#ifdef __SWITCH__
+#ifdef __3DS__
 #include <3ds.h>
 
 extern PrintConsole topScreen;
@@ -59,7 +59,7 @@ void con_printf(int priority, const char *fmt, ...)
 	va_list arglist;
 	char buffer[CON_LINE_LENGTH];
 
-#ifdef __SWITCH__
+#ifdef __3DS__
     consoleSelect(&bottomScreen);
 #endif
 
@@ -114,7 +114,7 @@ void con_printf(int priority, const char *fmt, ...)
 			PHYSFSX_printf(gamelog_fp,"%s",buffer);
 		}
 	}
-#ifdef __SWITCH__
+#ifdef __3DS__
     consoleSelect(&topScreen);
 #endif
 }

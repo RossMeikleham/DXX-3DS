@@ -1,6 +1,6 @@
 
 // Don't compile this file on switch
-#ifndef __SWITCH__
+#ifndef __3DS__
 
 #include <stdlib.h>
 #include <string.h>
@@ -185,4 +185,4 @@ static int doPlay(const char *filename)
 
 	return 0;
 }
-#endif // __SWITCH__
+#endif // __3DS__

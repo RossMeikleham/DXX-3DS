@@ -91,7 +91,7 @@ int gr_set_mode(u_int32_t mode)
 {
 	unsigned int w, h;
 
-#ifdef __SWITCH__
+#ifdef __3DS__
     w = 320;
     h = 240;
 #else
@@ -100,7 +100,7 @@ int gr_set_mode(u_int32_t mode)
 #endif
 	screen=NULL;
 
-#ifndef __SWITCH__
+#ifndef __3DS__
 	SDL_WM_SetCaption(DESCENT_VERSION, "Descent II");
 	SDL_WM_SetIcon( SDL_LoadBMP( "d2x-rebirth.bmp" ), NULL );
 #endif

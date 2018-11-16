@@ -24,7 +24,7 @@ void arch_close(void)
 	mouse_close();
 
 // aagallag: TODO -- Fix bug so we can gracefully exit
-#ifdef __SWITCH__
+#ifdef __3DS__
 	consoleInit(NULL);
 	printf("Press the home button to exit...\n");
 	while (1)

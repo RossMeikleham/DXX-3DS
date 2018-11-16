@@ -37,7 +37,7 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #include <sys/types.h>
 #endif
 
-#ifdef __SWITCH__
+#ifdef __3DS__
 #include <3ds.h>
 
 const unsigned int __stacksize__ = 8 * 1024 * 1024; // 8MB
@@ -309,7 +309,7 @@ jmp_buf LeaveEvents;
 
 int main(int argc, char *argv[])
 {
-#ifdef __SWITCH__
+#ifdef __3DS__
     mcuHwcInit();
     gfxInitDefault();
 
@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 	osSetSpeedupEnable(1); // Should get away with removing this
 #endif
 	mem_init();
-#if defined(__LINUX__) || defined(__SWITCH__)
+#if defined(__LINUX__) || defined(__3DS__)
 	error_init(NULL);
 #else
 	error_init(msgbox_error);

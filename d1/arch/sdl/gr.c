@@ -94,7 +94,7 @@ int gr_set_mode(u_int32_t mode)
 	if (mode<=0)
 		return 0;
 
-#ifdef __SWITCH__
+#ifdef __3DS__
     w = 320;
     h = 240;
 #else

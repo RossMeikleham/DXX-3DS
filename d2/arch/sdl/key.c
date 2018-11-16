@@ -34,7 +34,7 @@ typedef struct keyboard	{
 
 static keyboard key_data;
 
-#ifdef __SWITCH__
+#ifdef __3DS__
 const key_props key_properties[256] = {
 { "",       255,    SDLK_UNKNOWN                 }, // 0
 { "ESC",    255,    NX_KEY_PLUS        },
@@ -553,7 +553,7 @@ const key_props key_properties[256] = {
 { "W94",    255,    SDLK_WORLD_94      },
 { "W95",    255,    SDLK_WORLD_95      }, // 255
 };
-#endif // ! __SWITCH__
+#endif // ! __3DS__
 
 typedef struct d_event_keycommand
 {
