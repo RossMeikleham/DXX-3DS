@@ -122,6 +122,9 @@ unsigned int FileRead(void *handle, void *buf, unsigned int count)
 //returns status.  see values in movie.h
 int PlayMovie(const char *filename, int must_have)
 {
+#ifdef __3DS__
+    return MOVIE_NOT_PLAYED; // Playing movies segfaults in 3DS currently
+#endif
 	char name[FILENAME_LEN],*p;
 	int ret;
 
