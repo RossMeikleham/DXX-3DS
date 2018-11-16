@@ -12,7 +12,7 @@
 
 #define BASED_VERSION "Full Version v1.2"
 #define VERSION D2XMAJOR "." D2XMINOR "." D2XMICRO
-#define DESCENT_VERSION "D2X Switch " VERSION 
+#define DESCENT_VERSION "D2X 3DS " VERSION 
 
 extern const char g_descent_version[40];
 extern const char g_descent_build_datetime[21];

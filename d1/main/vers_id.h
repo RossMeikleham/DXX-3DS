@@ -12,7 +12,7 @@
 
 #define BASED_VERSION "Registered v1.5 Jan 5, 1996"
 #define VERSION DXX_VERSION_MAJOR "." DXX_VERSION_MINOR "." DXX_VERSION_MICRO
-#define DESCENT_VERSION "D1X Switch " VERSION
+#define DESCENT_VERSION "D1X 3DS " VERSION
 
 extern const char g_descent_version[40];
 extern const char g_descent_build_datetime[21];
