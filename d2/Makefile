@@ -2,12 +2,12 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-ifeq ($(strip $(DEVKITPRO)),)
-$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+ifeq ($(strip $(DEVKITARM)),)
+$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>/devkitarm")
 endif
 
 TOPDIR ?= $(CURDIR)
-include $(DEVKITPRO)/libnx/switch_rules
+include $(DEVKITARM)/3ds_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -15,38 +15,37 @@ include $(DEVKITPRO)/libnx/switch_rules
 # SOURCES is a list of directories containing source code
 # DATA is a list of directories containing data files
 # INCLUDES is a list of directories containing header files
-# EXEFS_SRC is the optional input directory containing data copied into exefs, if anything this normally should only contain "main.npdm".
-# ROMFS is the directory containing data to be added to RomFS, relative to the Makefile (Optional)
 #
-# NO_ICON: if set to anything, do not use icon.
-# NO_NACP: if set to anything, no .nacp file is generated.
-# APP_TITLE is the name of the app stored in the .nacp file (Optional)
-# APP_AUTHOR is the author of the app stored in the .nacp file (Optional)
-# APP_VERSION is the version of the app stored in the .nacp file (Optional)
-# APP_TITLEID is the titleID of the app stored in the .nacp file (Optional)
-# ICON is the filename of the icon (.jpg), relative to the project folder.
+# NO_SMDH: if set to anything, no SMDH file is generated.
+# ROMFS is the directory which contains the RomFS, relative to the Makefile (Optional)
+# APP_TITLE is the name of the app stored in the SMDH file (Optional)
+# APP_DESCRIPTION is the description of the app stored in the SMDH file (Optional)
+# APP_AUTHOR is the author of the app stored in the SMDH file (Optional)
+# ICON is the filename of the icon (.png), relative to the project folder.
 #   If not set, it attempts to use one of the following (in this order):
-#     - <Project name>.jpg
-#     - icon.jpg
-#     - <libnx folder>/default_icon.jpg
+#     - <Project name>.png
+#     - icon.png
+#     - <libctru folder>/default_icon.png
 #---------------------------------------------------------------------------------
-TARGET		:=	d2x-switch
-BUILD		:=	build
-SOURCES		:=	arch 2d 3d maths texmap misc mem arch/sdl iff libmve main
-DATA		:=	data
-INCLUDES	:=	include arch/include main arch/sdl
-EXEFS_SRC	:=	exefs_src
-APP_TITLE	:=	D2X Switch
-APP_AUTHOR	:=	aagallag
+APP_TITLE		:= D2X 3DS
+APP_DESCRIPTION := Port of DXX-Switch to 3DS (Switch port by aagallag)
+APP_AUTHOR		:= Ross Meikleham
 VER_MAJOR	:=	0
 VER_MINOR	:=	58
 VER_MICRO	:=	6
 APP_VERSION	:=	$(VER_MAJOR).$(VER_MINOR).$(VER_MICRO)
 
+
+TARGET		:=	d2x-3ds
+BUILD		:=	build
+SOURCES		:=	arch 2d 3d maths texmap misc mem arch/sdl iff libmve main
+INCLUDES	:=	include arch/include main arch/sdl
+#EXEFS_SRC	:=	exefs_src
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE
+ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 
 CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES)
@@ -54,20 +53,23 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DNDEBUG -DRELEASE -DNO_ASM -DUSE_SDLMIXER \
 			-DDXX_VERSION_MAJORi=$(VER_MAJOR) -DDXX_VERSION_MINORi=$(VER_MINOR) -DDXX_VERSION_MICROi=$(VER_MICRO) \
 			-DMAXIMUM_FPS=60 -DHAVE_STRUCT_TIMEVAL -DHAVE_STRUCT_TIMESPEC \
-			-Wno-deprecated-declarations
+			-Wno-deprecated-declarations -fno-short-enums
+
+CFLAGS  +=  $(INCLUDE) -DARM11 -D_3DS
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-flto --specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lSDL_mixer -lSDL -lnx -lphysfs -lFLAC -lmikmod -lvorbisidec -logg -lm
+#LIBS	:= -lSDL_mixer -lSDL -lnx -lphysfs -lFLAC -lmikmod -lvorbisidec -logg -lm
+LIBS	:= -lphysfs -lSDL_mixer -lSDL_image -lSDL -lmikmod -lmad -lvorbisidec -logg -lpng -ljpeg -lz -lcitro3d -lctru -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(LIBNX)
+LIBDIRS	:= $(CTRULIB) $(PORTLIBS)
 
 
 #---------------------------------------------------------------------------------
@@ -77,7 +79,6 @@ LIBDIRS	:= $(PORTLIBS) $(LIBNX)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export REL_FNAME:= $(TARGET)_v$(VER_MAJOR).$(VER_MINOR).$(VER_MICRO).zip
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 export TOPDIR	:=	$(CURDIR)
 
@@ -89,6 +90,8 @@ export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+PICAFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.v.pica)))
+SHLISTFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.shlist)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 
 #---------------------------------------------------------------------------------
@@ -105,10 +108,14 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
-export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
-export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
-export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
+export OFILES_SOURCES 	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+
+export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES)) \
+			$(PICAFILES:.v.pica=.shbin.o) $(SHLISTFILES:.shlist=.shbin.o)
+
+export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+
+export HFILES	:=	$(PICAFILES:.v.pica=_shbin.h) $(SHLISTFILES:.shlist=_shbin.h) $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
@@ -116,35 +123,25 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-export BUILD_EXEFS_SRC := $(TOPDIR)/$(EXEFS_SRC)
-
 ifeq ($(strip $(ICON)),)
-	icons := $(wildcard *.jpg)
-	ifneq (,$(findstring $(TARGET).jpg,$(icons)))
-		export APP_ICON := $(TOPDIR)/$(TARGET).jpg
+	icons := $(wildcard *.png)
+	ifneq (,$(findstring $(TARGET).png,$(icons)))
+		export APP_ICON := $(TOPDIR)/$(TARGET).png
 	else
-		ifneq (,$(findstring icon.jpg,$(icons)))
-			export APP_ICON := $(TOPDIR)/icon.jpg
+		ifneq (,$(findstring icon.png,$(icons)))
+			export APP_ICON := $(TOPDIR)/icon.png
 		endif
 	endif
 else
 	export APP_ICON := $(TOPDIR)/$(ICON)
 endif
 
-ifeq ($(strip $(NO_ICON)),)
-	export NROFLAGS += --icon=$(APP_ICON)
-endif
-
-ifeq ($(strip $(NO_NACP)),)
-	export NROFLAGS += --nacp=$(CURDIR)/$(TARGET).nacp
-endif
-
-ifneq ($(APP_TITLEID),)
-	export NACPFLAGS += --titleid=$(APP_TITLEID)
+ifeq ($(strip $(NO_SMDH)),)
+	export _3DSXFLAGS += --smdh=$(CURDIR)/$(TARGET).smdh
 endif
 
 ifneq ($(ROMFS),)
-	export NROFLAGS += --romfsdir=$(CURDIR)/$(ROMFS)
+	export _3DSXFLAGS += --romfs=$(CURDIR)/$(ROMFS)
 endif
 
 .PHONY: $(BUILD) clean all
@@ -156,42 +153,29 @@ $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
-dist-bin: all
-	@mkdir -p releases/
-	@rm -f releases/$(REL_FNAME)
-	@zip releases/$(REL_FNAME) $(TARGET).nro descent.cfg
-	@echo Dist location: releases/$(REL_FNAME)
-
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).pfs0 $(TARGET).nso $(TARGET).nro $(TARGET).nacp $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf $(TARGET).cia
 
 
 #---------------------------------------------------------------------------------
 else
-.PHONY:	all
 
 DEPENDS	:=	$(OFILES:.o=.d)
 
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-all	:	$(OUTPUT).pfs0 $(OUTPUT).nro
-
-$(OUTPUT).pfs0	:	$(OUTPUT).nso
-
-$(OUTPUT).nso	:	$(OUTPUT).elf
-
-ifeq ($(strip $(NO_NACP)),)
-$(OUTPUT).nro	:	$(OUTPUT).elf $(OUTPUT).nacp
+ifeq ($(strip $(NO_SMDH)),)
+$(OUTPUT).3dsx	:	$(OUTPUT).elf $(OUTPUT).smdh
 else
-$(OUTPUT).nro	:	$(OUTPUT).elf
+$(OUTPUT).3dsx	:	$(OUTPUT).elf
 endif
 
-$(OUTPUT).elf	:	$(OFILES)
+$(OFILES_SOURCES) : $(HFILES)
 
-$(OFILES_SRC)	: $(HFILES_BIN)
+$(OUTPUT).elf	:	$(OFILES)
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
@@ -200,6 +184,33 @@ $(OFILES_SRC)	: $(HFILES_BIN)
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@$(bin2o)
+
+#---------------------------------------------------------------------------------
+# rules for assembling GPU shaders
+#---------------------------------------------------------------------------------
+define shader-as
+	$(eval CURBIN := $*.shbin)
+	$(eval DEPSFILE := $(DEPSDIR)/$*.shbin.d)
+	echo "$(CURBIN).o: $< $1" > $(DEPSFILE)
+	echo "extern const u8" `(echo $(CURBIN) | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`"_end[];" > `(echo $(CURBIN) | tr . _)`.h
+	echo "extern const u8" `(echo $(CURBIN) | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`"[];" >> `(echo $(CURBIN) | tr . _)`.h
+	echo "extern const u32" `(echo $(CURBIN) | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`_size";" >> `(echo $(CURBIN) | tr . _)`.h
+	picasso -o $(CURBIN) $1
+	bin2s $(CURBIN) | $(AS) -o $*.shbin.o
+endef
+
+%.shbin.o %_shbin.h : %.v.pica %.g.pica
+	@echo $(notdir $^)
+	@$(call shader-as,$^)
+
+%.shbin.o %_shbin.h : %.v.pica
+	@echo $(notdir $<)
+	@$(call shader-as,$<)
+
+%.shbin.o %_shbin.h : %.shlist
+	@echo $(notdir $<)
+	@$(call shader-as,$(foreach file,$(shell cat $<),$(dir $<)$(file)))
+
 
 -include $(DEPENDS)
 
