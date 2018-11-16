@@ -101,6 +101,29 @@ int mix_play_file(char *filename, int loop, void (*hook_finished_track)())
 	{
 		con_printf(CON_CRITICAL,"Music %s could not be loaded: %s\n", filename, Mix_GetError());
 		mix_stop_music();
+
+#ifdef __3DS__
+        // SDL_Mixer 3DS isn't able to play hmp's converted to midi 
+        // instead attempt to load the sound from the wav folder
+        // failing that attempt to load the sound file from the mp3 folder
+        #define NEW_PATH_BUFSIZE 0x100
+	    char new_path_buffer[NEW_PATH_BUFSIZE + 1];
+        if (!d_stricmp(fptr, ".hmp")) 
+        {
+            strcpy(new_path_buffer, "/wav/");
+            strcpy(fptr, ".wav");
+            strncat(new_path_buffer, filename, NEW_PATH_BUFSIZE);
+            return mix_play_file(new_path_buffer, loop, hook_finished_track);
+            
+        }
+        else if (!d_stricmp(fptr, ".wav")) 
+        {
+            strcpy(new_path_buffer, "../mp3/");
+            strcpy(fptr, ".mp3");
+            strncat(new_path_buffer, filename, NEW_PATH_BUFSIZE);
+            return mix_play_file(new_path_buffer, loop, hook_finished_track);
+        }
+#endif
 	}
 
 	return 0;

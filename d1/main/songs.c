@@ -34,6 +34,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "config.h"
 #include "timer.h"
 #include "args.h"
+#ifdef __3DS__
+#include "hmp.h"
+#endif
 
 int Songs_initialized = 0;
 static int Song_playing = -1; // -1 if no song playing, else the Descent song number
@@ -60,6 +63,44 @@ void songs_set_volume(int volume)
 	mix_set_music_volume(volume);
 #endif
 }
+
+#ifdef __3DS__
+static void extract_songs_to_midi(bim_song_info *songs, int count) {
+
+    unsigned char *current_music_hndlbuf = NULL;
+	unsigned int bufsize = 0;
+    const char *song_folder_path = "midi/";
+
+ 
+    if (PHYSFS_isDirectory(song_folder_path)) {
+        return;
+    }
+    
+    con_printf(CON_NORMAL, "Extracting midi songs, might take a sec\n");
+
+    char song_path[0x100];
+    PHYSFS_mkdir(song_folder_path);
+
+    for (int i = 0; i < count; i++) {
+        song_path[0] = '\0';
+        strcat(song_path, song_folder_path);
+        strcat(song_path, songs[i].filename);
+        char *extension = strstr(song_path, ".");
+        if (extension == NULL) {
+            continue;
+        }
+        extension[1] = '\0';
+        strcat(extension, "mid");
+    
+        hmp2mid(songs[i].filename, &current_music_hndlbuf, &bufsize);
+        
+        PHYSFS_file *filew = PHYSFS_openWrite(song_path);
+        PHYSFS_write(filew, current_music_hndlbuf, bufsize * sizeof(char), 1);
+        PHYSFS_close(filew);
+    }
+}
+#endif
+
 
 // Set up everything for our music
 // NOTE: you might think this is done once per runtime but it's not! It's done for EACH song so that each mission can have it's own descent.sng structure. We COULD optimize that by only doing this once per mission.
@@ -144,7 +185,12 @@ void songs_init()
 
 	Num_bim_songs = i;
 	Songs_initialized = 1;
-	if (fp != NULL)
+	
+#ifdef __3DS__
+    extract_songs_to_midi(BIMSongs, Num_bim_songs);
+#endif    
+    
+    if (fp != NULL)
 		PHYSFS_close(fp);
 
 	if (GameArg.SndNoMusic)
