@@ -94,8 +94,13 @@ int gr_set_mode(u_int32_t mode)
 	if (mode<=0)
 		return 0;
 
+#ifdef __SWITCH__
+    w = 320;
+    h = 240;
+#else
 	w = 1280;
 	h = 720;
+#endif
 
 	if(SDL_VideoModeOK(w,h,GameArg.DbgBpp,sdl_video_flags))
 	{

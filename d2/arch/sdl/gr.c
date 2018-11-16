@@ -91,8 +91,13 @@ int gr_set_mode(u_int32_t mode)
 {
 	unsigned int w, h;
 
+#ifdef __SWITCH__
+    w = 320;
+    h = 240;
+#else
 	w = 1280;
 	h = 720;
+#endif
 	screen=NULL;
 
 #ifndef __SWITCH__

@@ -23,7 +23,11 @@
 void PHYSFSX_init(int argc, char *argv[])
 {
 	char hog[PATH_MAX];
-	int ret = PHYSFS_init(argv[0]);
+#ifdef __SWITCH__
+    int ret = PHYSFS_init("/3ds/D1/");
+#else	
+    int ret = PHYSFS_init(argv[0]);
+#endif	
 	if (ret != 1)
 		Error("Failed to init PHYSFS....\n");
 	PHYSFS_permitSymbolicLinks(1);

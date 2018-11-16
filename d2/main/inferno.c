@@ -38,7 +38,13 @@ char copyright[] = "DESCENT II  COPYRIGHT (C) 1994-1996 PARALLAX SOFTWARE CORPOR
 #endif
 
 #ifdef __SWITCH__
-#include <switch.h>
+#include <3ds.h>
+
+const unsigned int __stacksize__ = 8 * 1024 * 1024; // 8MB
+
+PrintConsole topScreen;
+PrintConsole bottomScreen;
+
 #endif
 
 #include "pstypes.h"
@@ -295,20 +301,6 @@ int standard_handler(d_event *event)
 	return 0;
 }
 
-#ifdef __SWITCH_DBG__
-void switch_init()
-{
-	gfxInitDefault();
-	consoleInit(NULL);
-	printf("\x1b[16;20HHello World!\n");
-}
-
-void switch_end()
-{
-	gfxExit();
-}
-#endif //__SWITCH__
-
 jmp_buf LeaveEvents;
 #define PROGNAME argv[0]
 
@@ -317,8 +309,15 @@ jmp_buf LeaveEvents;
 
 int main(int argc, char *argv[])
 {
-#ifdef __SWITCH_DBG__
-	switch_init();
+#ifdef __SWITCH__
+    mcuHwcInit();
+    gfxInitDefault();
+
+    consoleInit(GFX_TOP, &topScreen);
+    consoleInit(GFX_BOTTOM, &bottomScreen);
+    consoleSelect(&topScreen);
+
+	osSetSpeedupEnable(1); // Should get away with removing this
 #endif
 	mem_init();
 #if defined(__LINUX__) || defined(__SWITCH__)

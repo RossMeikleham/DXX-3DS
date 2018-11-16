@@ -4,6 +4,13 @@
  *
  */
 
+#ifdef __SWITCH__
+#include <3ds.h>
+
+extern PrintConsole topScreen;
+extern PrintConsole bottomScreen;
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -52,13 +59,13 @@ void con_printf(int priority, const char *fmt, ...)
 	va_list arglist;
 	char buffer[CON_LINE_LENGTH];
 
+#ifdef __SWITCH__
+    consoleSelect(&bottomScreen);
+#endif
+
 	memset(buffer,'\0',CON_LINE_LENGTH);
 
-#ifdef __SWITCH_DBG__
-	if (1)
-#else
 	if (priority <= ((int)GameArg.DbgVerbose))
-#endif
 	{
 		char *p1, *p2;
 
@@ -107,6 +114,9 @@ void con_printf(int priority, const char *fmt, ...)
 			PHYSFSX_printf(gamelog_fp,"%s",buffer);
 		}
 	}
+#ifdef __SWITCH__
+    consoleSelect(&topScreen);
+#endif
 }
 
 static void con_draw(void)
