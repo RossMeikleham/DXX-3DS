@@ -185,7 +185,9 @@ u_int32_t Game_screen_mode = SM(640,480);
 void init_cockpit()
 {
 	//Initialize the on-screen canvases
-
+#ifdef __3DS__
+    PlayerCfg.CockpitMode[1] = CM_FULL_SCREEN;
+#endif
 	if (Screen_mode != SCREEN_GAME)
 		return;
 
