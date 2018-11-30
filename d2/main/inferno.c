@@ -340,9 +340,9 @@ int main(int argc, char *argv[])
 
 		return(0);
 	}
-
+#ifndef __3DS__
 	printf("\nType %s -help' for a list of command-line options.\n\n", PROGNAME);
-
+#endif
 	PHYSFSX_listSearchPathContent();
 	
 	if (!PHYSFSX_checkSupportedArchiveTypes())

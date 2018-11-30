@@ -112,7 +112,7 @@ void con_printf(int priority, const char *fmt, ...)
 			}
 #endif
 			PHYSFSX_printf(gamelog_fp,"%s",buffer);
-		}
+        }
 	}
 #ifdef __3DS__
     consoleSelect(&topScreen);
