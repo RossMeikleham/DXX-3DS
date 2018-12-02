@@ -53,8 +53,8 @@ root of the repository
 Follow instructions from [physfs-3ds](https://github.com/rossmeikleham/physfs-3ds) repo page.
 
 ## Install bannertool + makerom (required for cia builds, ignore for 3dsx only)
-Build [bannertool](https://github.com/Steveice10/bannertool) and add it to the PATH
-Build [makerom](https://github.com/profi200/Project_CTR) and add it to the PATH
+- Build [bannertool](https://github.com/Steveice10/bannertool) and add it to the PATH
+- Build [makerom](https://github.com/profi200/Project_CTR) and add it to the PATH
 
 ## Compile DXX 3DS (3dsx + cia)
 ```
