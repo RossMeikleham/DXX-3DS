@@ -63,7 +63,7 @@ cd DXX-3DS/
 ./make_3ds.sh
 ```
 
-# Compile DXX 3DS (3dsx only)
+## Compile DXX 3DS (3dsx only)
 ```
 git clone git@github.com:rossmeikleham/DXX-3DS.git
 cd DXX-3DS/
