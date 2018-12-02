@@ -1,6 +1,6 @@
 # DXX 3DS
 
-[![Build Status](https://travis-ci.org/rossmeikleham/DXX-3DS.svg?branch=master)](https://travis-ci.org/rossmeikleham/DXX-3DS)
+[![Build Status](https://travis-ci.org/RossMeikleham/DXX-3DS.svg?branch=master)](https://travis-ci.org/rossmeikleham/DXX-3DS)
 
 A Nintendo 3DS port of Descent I & Descent II.  This is a fork of [DXX-Switch](https://github.com/aagallag/DXX-Switch)/[DXX-Retro](https://github.com/CDarrow/DXX-Retro), which is a fork of [DXX-Rebirth](https://github.com/dxx-rebirth/dxx-rebirth), which is a fork of the original engine source code created by Parallax Software Corporation.
 
