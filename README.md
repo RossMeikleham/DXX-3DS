@@ -23,10 +23,9 @@ A Nintendo 3DS port of Descent I & Descent II.  This is a fork of [DXX-Switch](h
 - The names (not including the file extension) need to match the names of the midi songs but can be replaced with your own music if desired
 
 ## Known issues and missing features
-- Unable to get a working .cia version (I think his is due to the large amount of stack space used by DXX Retro (around 4-8MB), default 3DS stack space is 32KB. Setting __stacksize__ = 8MB works fine with homebrew browser, but .cia builds automatically crash) 
+- Unable to get a working .cia version (I think his is due to the large amount of stack space used by DXX Retro (around 4-8MB), default 3DS stack space is 32KB. Setting `__stacksize__` to 8MB works fine with homebrew browser, but .cia builds automatically crash) 
 - Multiple save files don't work (currently hardcoded to `player.plr`)
 - Only tested with the Descent files from Steam; GOG and CD-ROM releases have not been tested
-- Doesn't utilize 1080p resolution when docked
 - Enable the original HUD
 - Network/Multiplayer is not enabled
 - Level Selection menu doesn't work (no way to input a different level)
