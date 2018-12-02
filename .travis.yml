@@ -1,30 +1,11 @@
-before_install:
-    - sudo apt-get install cmake
-
+matrix:
+  include:
+    - os: linux
+      language: ruby
+      services:
+  
 install:
-  - wget https://github.com/devkitPro/pacman/releases/download/devkitpro-pacman-1.0.1/devkitpro-pacman.deb
-  - sudo dpkg -i devkitpro-pacman.deb
-  - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -Syu
-  - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -S switch-dev switch-libvorbisidec switch-libmikmod switch-flac switch-libogg
-  - source /etc/profile.d/devkit-env.sh
-  - export DEVKITA64=$DEVKITPRO/devkitA64
-  - git clone https://github.com/carstene1ns/physfs-switch.git
-  - cd physfs-switch/
-  - mkdir build
-  - cd build/
-  - cmake .. -DCMAKE_TOOLCHAIN_FILE=../Toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$DEVKITPRO/portlibs/switch  -DPHYSFS_BUILD_SHARED=OFF -DPHYSFS_BUILD_TEST=OFF
-  - make
-  - sudo make install
-  - cd ../../
-  - wget https://github.com/aagallag/pacman-packages/releases/download/v1.0/switch-sdl-1.2.15-1-any.pkg.tar.xz
-  - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -U switch-sdl-1.2.15-1-any.pkg.tar.xz
-  - wget https://github.com/aagallag/pacman-packages/releases/download/v1.0/switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
-  - sudo /opt/devkitpro/pacman/bin/pacman --noconfirm -U switch-sdl_mixer-1.2.12-2-any.pkg.tar.xz
+    - docker build -t dxx_3ds . 
 
-script:
-  - make
-  - cd d1/
-  - make dist-bin
-  - cd ../d2/
-  - make dist-bin
-  - cd ../
+script: 
+    - docker run -v $(pwd):/mnt dxx_3ds
