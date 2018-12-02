@@ -15,11 +15,10 @@ A Nintendo 3DS port of Descent I & Descent II.  This is a fork of [DXX-Switch](h
 
 ## Music
 - The 3DS is unable to play the hmp converted to midi files in the Descent games
-- On first run of D1X/D2X, midi files from the respecitive game will be copied to/3ds/D1/midi/ /  /3ds/D2/midi/
+- On first run of D1X/D2X, midi files from the respecitive game will be copied to/3ds/D1/midi/ and /3ds/D2/midi/
 - These midi files can be converted to WAV though a program such as Timidity with Fluidr3 soundfonts [See here](https://wiki.archlinux.org/index.php/Timidity)
 - Also GoG version apparently comes with MP3 versions of all the music files for each game, these should be able to be copied to /3ds/D1/mp3/ and /3ds/D2/mp3/ if the filenames match the midi names for each sequence/level
-- Descent1/2 will attempt to first play music from /3ds/D1/wav / /3ds/D2/wav
-- Then /3ds/D1/mp3 / /3ds/D2/mp3
+- Descent1/2 will attempt to first play music from /3ds/D1/wav and /3ds/D2/wav, then /3ds/D1/mp3 and /3ds/D2/mp3
 - The names (not including the file extension) need to match the names of the midi songs but can be replaced with your own music if desired
 
 ## Known issues and missing features
