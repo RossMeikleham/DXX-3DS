@@ -27,8 +27,10 @@ void arch_close(void)
 #ifdef __3DS__
 	consoleInit(NULL);
 	printf("Press the home button to exit...\n");
-	while (1)
-		svcSleepThread(10000000000UL);
+	while (aptMainLoop()) 
+    {
+		svcSleepThread(1000UL * 1000UL * 100UL);
+    }
 #endif
 
 	if (!GameArg.SndNoSound)

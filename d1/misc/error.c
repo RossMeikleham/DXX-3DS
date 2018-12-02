@@ -26,6 +26,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "dxxerror.h"
 #include "inferno.h"
 
+#ifdef __3DS__
+#include "3ds.h"
+#endif
+
 #define MAX_MSG_LEN 256
 
 static void (*ErrorPrintFunc)(const char *);
@@ -67,10 +71,6 @@ void Error(const char *fmt,...)
 	char exit_message[MAX_MSG_LEN]="Error: "; // don't put the new line in for dialog output
 	va_list arglist;
 
-#ifdef __3DS__
-	consoleInit(NULL);
-#endif
-
 	va_start(arglist,fmt);
 	vsprintf(exit_message+strlen(exit_message),fmt,arglist);
 	va_end(arglist);
@@ -81,8 +81,9 @@ void Error(const char *fmt,...)
 
 #ifdef __3DS__
 	printf("Press the home button to exit...\n");
-	while (1)
-		svcSleepThread(10000000000UL);
+	while (aptMainLoop()) {
+		svcSleepThread(1000UL * 1000UL * 100UL);
+    }
 #endif
 	exit(1);
 }
