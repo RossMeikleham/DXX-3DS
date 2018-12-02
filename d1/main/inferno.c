@@ -34,7 +34,7 @@ char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE CORPORAT
 #ifdef __3DS__
 #include <3ds.h>
 
-//const unsigned int __stacksize__ = 8 * 1024 * 1024; // 8MB
+const unsigned int __stacksize__ = 8 * 1024 * 1024; // 8MB
 
 PrintConsole topScreen;
 PrintConsole bottomScreen;
