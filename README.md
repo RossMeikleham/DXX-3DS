@@ -6,11 +6,11 @@ A Nintendo 3DS port of Descent I & Descent II.  This is a fork of [DXX-Switch](h
 
 ## Install instructions
 ### D1X Switch
-- Create the folder /3ds/D1
+- Create the folder /3ds/D1/
 - Copy `descent.hog`and `descent.pig` to the same directory. These files are included with a purchase of the game.  Tested with [Descent I from Steam](https://store.steampowered.com/app/273570/Descent/).
 
 ### D2X Switch
-- Create the folder /3ds/D1
+- Create the folder /3ds/D2/
 - Copy `descent2.ham, descent2.hog, descent2.s22`, and all `*.pig` files to the same directory.  These files are included with a purchase of the game.  Tested with [Descent II from Steam](https://store.steampowered.com/app/273580/Descent_2/).
 
 ## Music
@@ -22,7 +22,7 @@ A Nintendo 3DS port of Descent I & Descent II.  This is a fork of [DXX-Switch](h
 - The names (not including the file extension) need to match the names of the midi songs but can be replaced with your own music if desired
 
 ## Known issues and missing features
-- Unable to get a working .cia version (I think his is due to the large amount of stack space used by DXX Retro (around 4-8MB), default 3DS stack space is 32KB. Setting `__stacksize__` to 8MB works fine with homebrew browser, but .cia builds automatically crash) 
+- Unable to get a working .cia version (I think his is due to the large amount of stack space used by DXX Rebirth (around 4-8MB), default 3DS stack space is 32KB. Setting `__stacksize__` to 8MB works fine with homebrew browser, but .cia builds automatically crash) 
 - Multiple save files don't work (currently hardcoded to `player.plr`)
 - Only tested with the Descent files from Steam; GOG and CD-ROM releases have not been tested
 - Enable the original HUD
