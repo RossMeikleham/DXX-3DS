@@ -118,7 +118,7 @@ int mix_play_file(char *filename, int loop, void (*hook_finished_track)())
         }
         else if (!d_stricmp(fptr, ".wav")) 
         {
-            strcpy(new_path_buffer, "../mp3/");
+            strcpy(new_path_buffer, "/mp3/");
             strcpy(fptr, ".mp3");
             strncat(new_path_buffer, filename, NEW_PATH_BUFSIZE);
             return mix_play_file(new_path_buffer, loop, hook_finished_track);
