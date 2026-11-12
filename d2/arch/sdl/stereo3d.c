@@ -9,6 +9,7 @@
 
 #ifdef __3DS__
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <3ds.h>
@@ -23,8 +24,10 @@
 #include "screens.h"
 #include "game.h"
 
-extern int SDL_N3DS_SetStereo(int enable);
-extern void SDL_N3DS_SetRightEyeFrame(const Uint8 *pixels, int pitch);
+/* From the stereo patch to SDL's 3DS video driver (3ds/sdl-n3ds-stereo.patch). Weak, so
+   the game still links against an unpatched SDL and just stays 2D. */
+extern int SDL_N3DS_SetStereo(int enable) __attribute__((weak));
+extern void SDL_N3DS_SetRightEyeFrame(const Uint8 *pixels, int pitch) __attribute__((weak));
 
 extern fix Render_zoom;
 extern int Automap_active;
@@ -46,6 +49,17 @@ static float cfg_separation = 0.25f;
 static float cfg_convergence = 14.0f;
 static int cfg_enabled = 1;
 static int cfg_loaded = 0;
+
+/* Prints to the bottom-screen console when the reason stereo is on/off changes,
+   so a hardware test shows why the top screen is flat. */
+static int last_status = -1;
+static void status(int code, const char *why)
+{
+	if (code == last_status)
+		return;
+	last_status = code;
+	printf("3D: %s\n", why);
+}
 
 static void load_config(void)
 {
@@ -80,7 +94,14 @@ void stereo3d_init(void)
 	if (!cfg_loaded)
 		load_config();
 
+	if (!SDL_N3DS_SetStereo || !SDL_N3DS_SetRightEyeFrame)
+	{
+		sdl_stereo = 0;
+		return;
+	}
 	sdl_stereo = (SDL_N3DS_SetStereo(1) == 0);
+	if (!sdl_stereo)
+		printf("3D: video driver refused stereo (%s)\n", SDL_GetError());
 	if (!sdl_stereo || !canvas || !screen)
 		return;
 
@@ -131,19 +152,25 @@ int stereo3d_begin_frame(void)
 {
 	float slider, half_sep, focal;
 
-	if (!sdl_stereo || !right_buf || !cfg_enabled)
-		return 0;
+	if (!sdl_stereo)
+		return status(1, "off - video driver has no stereo"), 0;
+	if (!right_buf)
+		return status(2, "off - no right-eye buffer"), 0;
+	if (!cfg_enabled)
+		return status(3, "off - Enabled=0 in stereo3d.cfg"), 0;
 	if (grd_curscreen->sc_canvas.cv_bitmap.bm_data != (ubyte *)canvas->pixels ||
 	    canvas->w != right_w || canvas->h != right_h)
-		return 0;
+		return status(4, "off - screen canvas changed"), 0;
 	// Only when nothing is drawn over the game: menus and the automap draw to the
 	// left buffer only, so those frames are shown flat (left image to both eyes).
-	if (window_get_front() != Game_wind || Automap_active)
-		return 0;
+	if (window_get_front() != Game_wind)
+		return status(5, "flat - a menu is open"), 0;
+	if (Automap_active)
+		return status(6, "flat - automap"), 0;
 
 	slider = osGet3DSliderState();
 	if (slider < 0.02f)
-		return 0;
+		return status(7, "flat - slider down"), 0;
 
 	half_sep = cfg_separation * slider;
 	// Horizontal focal length of the mine view in pixels (Render_zoom 0x9000 is ~60 deg).
@@ -151,6 +178,12 @@ int stereo3d_begin_frame(void)
 
 	Stereo_eye_offset = fl2f(half_sep);
 	Stereo_pixel_shift = (int)(focal * half_sep / cfg_convergence + 0.5f);
+	if (last_status != 0)
+	{
+		last_status = 0;
+		printf("3D: on - eye %.2f units, shift %d px, view %dx%d\n",
+		       half_sep, Stereo_pixel_shift, Screen_3d_window.cv_bitmap.bm_w, Screen_3d_window.cv_bitmap.bm_h);
+	}
 	in_stereo_frame = 1;
 	return 1;
 }

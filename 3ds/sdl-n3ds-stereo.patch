@@ -1,0 +1,344 @@
+diff --color -ruN a/src/video/n3ds/SDL_n3dsvideo.c b/src/video/n3ds/SDL_n3dsvideo.c
+--- a/src/video/n3ds/SDL_n3dsvideo.c
++++ b/src/video/n3ds/SDL_n3dsvideo.c
+@@ -109,6 +109,137 @@
+ Thread privateVideoThreadHandle = NULL;
+ static void videoThread(void* data);
+ 
++// Stereoscopic 3D: right-eye render target and texture
++C3D_RenderTarget *VideoSurfaceR;
++static C3D_Tex right_tex;
++static bool right_tex_ready = false;
++static bool scene_scale = false;      // render targets are 2x supersampled
++static SDL_VideoDevice *n3ds_device = NULL;
++
++static void stopVideoThread(void)
++{
++	if (privateVideoThreadHandle) {
++		runThread = false;
++		LightEvent_Signal(&privateVideoThreadEvent);
++		threadJoin(privateVideoThreadHandle, U64_MAX);
++		threadFree(privateVideoThreadHandle);
++		privateVideoThreadHandle = NULL;
++	}
++}
++
++static void startVideoThread(_THIS)
++{
++	runThread = true;
++	LightEvent_Init(&privateVideoThreadEvent, RESET_ONESHOT);
++	// libctru sys threads uses 0x18, so we use a lower priority, but higher than any other SDL thread.
++	// Joinable (not detached): joining a detached thread reads its freed Thread struct.
++	privateVideoThreadHandle = threadCreate(videoThread, (void *) this, STACKSIZE, 0x19, -2, false);
++}
++
++static void createRightTarget(GSPGPU_FramebufferFormat mode)
++{
++	// No depth buffer: the scene is a single textured quad.
++	if (scene_scale)
++		VideoSurfaceR = C3D_RenderTargetCreate(240*2, 400*2, mode, -1);
++	else
++		VideoSurfaceR = C3D_RenderTargetCreate(240, 400, mode, -1);
++	if (VideoSurfaceR)
++		C3D_RenderTargetSetOutput(VideoSurfaceR, GFX_TOP, GFX_RIGHT, displayTranferFlags[mode] |
++			GX_TRANSFER_SCALING(scene_scale ? GX_TRANSFER_SCALE_XY : GX_TRANSFER_SCALE_NO));
++}
++
++static void freeRightEye(_THIS)
++{
++	if (VideoSurfaceR) {
++		C3D_RenderTargetDelete(VideoSurfaceR);
++		VideoSurfaceR = NULL;
++	}
++	if (right_tex_ready) {
++		C3D_TexDelete(&right_tex);
++		right_tex_ready = false;
++	}
++	if (this->hidden->buffer_r) {
++		linearFree(this->hidden->buffer_r);
++		this->hidden->buffer_r = NULL;
++	}
++	this->hidden->right_pixels = NULL;
++	this->hidden->right_valid = false;
++}
++
++// Allocates the right-eye buffer, texture and render target for the current mode.
++static int allocRightEye(_THIS)
++{
++	size_t size = this->hidden->w * this->hidden->h * this->hidden->byteperpixel;
++
++	this->hidden->buffer_r = linearAlloc(size);
++	if (!this->hidden->buffer_r) {
++		SDL_SetError("right-eye buffer: %u bytes, %u linear free", (unsigned)size, (unsigned)linearSpaceFree());
++		return -1;
++	}
++	SDL_memset(this->hidden->buffer_r, 0, size);
++
++	if (!C3D_TexInit(&right_tex, this->hidden->w, this->hidden->h, this->hidden->mode)) {
++		SDL_SetError("right-eye texture %dx%d fmt %d: %u linear free", this->hidden->w, this->hidden->h,
++			(int)this->hidden->mode, (unsigned)linearSpaceFree());
++		freeRightEye(this);
++		return -1;
++	}
++	right_tex_ready = true;
++	C3D_TexSetFilter(&right_tex, this->hidden->fitscreen ? GPU_LINEAR : GPU_NEAREST, GPU_NEAREST);
++
++	createRightTarget(this->hidden->mode);
++	if (!VideoSurfaceR) {
++		SDL_SetError("right-eye target (scale %d, fmt %d): %u VRAM free", (int)scene_scale,
++			(int)this->hidden->mode, (unsigned)vramSpaceFree());
++		freeRightEye(this);
++		return -1;
++	}
++	return 0;
++}
++
++/* Turn the top screen's stereoscopic mode on or off. Call after SDL_SetVideoMode().
++   While on, each flip shows the frame passed to SDL_N3DS_SetRightEyeFrame() to the
++   right eye, or the normal (left) frame to both eyes when none was passed. */
++int SDL_N3DS_SetStereo(int enable)
++{
++	_THIS = n3ds_device;
++	enable = enable ? 1 : 0;
++
++	if (!this || !this->hidden->buffer)
++		return -1;
++	if (enable == this->hidden->stereo)
++		return 0;
++
++	int ret = 0;
++
++	stopVideoThread();
++	if (enable) {
++		if (allocRightEye(this) == 0) {
++			gfxSet3D(true);
++			this->hidden->stereo = true;
++		} else {
++			ret = -1; // allocRightEye set the error
++		}
++	} else {
++		freeRightEye(this);
++		gfxSet3D(false);
++		this->hidden->stereo = false;
++	}
++	startVideoThread(this);
++
++	return ret;
++}
++
++/* Supply the right-eye image for the next SDL_Flip()/SDL_UpdateRect() only. The buffer
++   must match the video surface's size and format (8bpp uses the surface palette). */
++void SDL_N3DS_SetRightEyeFrame(const Uint8 *pixels, int pitch)
++{
++	if (!n3ds_device)
++		return;
++	n3ds_device->hidden->right_pixels = pixels;
++	n3ds_device->hidden->right_pitch = pitch;
++}
++
+ /* Initialization/Query functions */
+ static int N3DS_VideoInit(_THIS, SDL_PixelFormat *vformat);
+ static SDL_Rect **N3DS_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags);
+@@ -346,13 +477,13 @@
+ 
+ 
+ // if there is a video thread running, stop and free it
+-	if (privateVideoThreadHandle) {
+-		runThread = false;
+-		LightEvent_Signal(&privateVideoThreadEvent);
+-		threadJoin(privateVideoThreadHandle, U64_MAX);
+-		privateVideoThreadHandle = NULL;
+-	}
++	stopVideoThread();
+ 
++	// right-eye resources depend on the mode; rebuilt below if stereo is on
++	bool stereo = this->hidden->stereo;
++	if (stereo)
++		freeRightEye(this);
++
+ 	if ( this->hidden->buffer ) {
+ 		linearFree( this->hidden->buffer );
+ 		this->hidden->buffer = NULL;
+@@ -459,10 +590,13 @@
+ 	C3D_TexSetFilter(&spritesheet_tex, this->hidden->fitscreen ? GPU_LINEAR : GPU_NEAREST , GPU_NEAREST);
+ //	C3D_TexBind(0, &spritesheet_tex);
+ 
+-	runThread = true;
+-	LightEvent_Init(&privateVideoThreadEvent, RESET_ONESHOT);
+- // libctru sys threads uses 0x18, so we use a lower priority, but higher than any other SDL thread
+-	privateVideoThreadHandle = threadCreate(videoThread, (void *) this, STACKSIZE, 0x19, -2, true);
++	if (stereo && allocRightEye(this) != 0) {
++		this->hidden->stereo = false;
++		gfxSet3D(false);
++	}
++
++	n3ds_device = this;
++	startVideoThread(this);
+ 	this->hidden->currentVideoSurface = current;
+ 	/* We're done */
+ 
+@@ -506,10 +640,27 @@
+ 			if (C3D_FrameBegin(C3D_FRAME_SYNCDRAW)){
+ //			if (C3D_FrameBegin(C3D_FRAME_NONBLOCK)){
+ 				if (this->hidden->screens & SDL_TOPSCR) {
++					int tx = (400-this->hidden->w1*this->hidden->scalex)/2;
++					int ty = (240-this->hidden->h1*this->hidden->scaley)/2;
++					int tw = this->hidden->w1*this->hidden->scalex;
++					int th = this->hidden->h1*this->hidden->scaley;
++
++					C3D_TexBind(0, &spritesheet_tex);
+ 					C3D_RenderTargetClear(VideoSurface1, C3D_CLEAR_ALL, RenderClearColor, 0);
+ 					C3D_FrameDrawOn(VideoSurface1);
+ 					C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projection);
+-					drawTexture((400-this->hidden->w1*this->hidden->scalex)/2,(240-this->hidden->h1*this->hidden->scaley)/2, this->hidden->w1*this->hidden->scalex, this->hidden->h1*this->hidden->scaley, this->hidden->l1, this->hidden->r1, this->hidden->t1, this->hidden->b1);
++					drawTexture(tx, ty, tw, th, this->hidden->l1, this->hidden->r1, this->hidden->t1, this->hidden->b1);
++
++					// In 3D mode the right framebuffer must be drawn every frame, otherwise
++					// it shows stale memory. Without a right-eye frame, mirror the left one.
++					if (this->hidden->stereo && VideoSurfaceR) {
++						C3D_TexBind(0, this->hidden->right_valid ? &right_tex : &spritesheet_tex);
++						C3D_RenderTargetClear(VideoSurfaceR, C3D_CLEAR_ALL, RenderClearColor, 0);
++						C3D_FrameDrawOn(VideoSurfaceR);
++						C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projection);
++						drawTexture(tx, ty, tw, th, this->hidden->l1, this->hidden->r1, this->hidden->t1, this->hidden->b1);
++					}
++					C3D_TexBind(0, &spritesheet_tex);
+ 				}
+ 				if (this->hidden->screens & SDL_BOTTOMSCR) {
+ 					C3D_RenderTargetClear(VideoSurface2, C3D_CLEAR_ALL, RenderClearColor, 0);
+@@ -526,6 +677,29 @@
+ 	}
+ }
+ 
++// Copy the app's right-eye frame into the RGBA staging buffer (palette lookup for 8bpp).
++static void convertRightEye(_THIS)
++{
++	const Uint8 *src = this->hidden->right_pixels;
++	int pitch = this->hidden->right_pitch;
++	int x, y;
++
++	if (this->hidden->bpp == 8) {
++		Uint32 *palette = this->hidden->palette;
++		for (y = 0; y < this->info.current_h; y++) {
++			const Uint8 *s = src + y * pitch;
++			Uint32 *d = (Uint32 *)this->hidden->buffer_r + y * this->hidden->w;
++			for (x = 0; x < this->info.current_w; x++)
++				*d++ = palette[*s++];
++		}
++	} else {
++		int rowbytes = this->info.current_w * this->hidden->byteperpixel;
++		for (y = 0; y < this->info.current_h; y++)
++			SDL_memcpy((Uint8 *)this->hidden->buffer_r + y * this->hidden->w * this->hidden->byteperpixel,
++				src + y * pitch, rowbytes);
++	}
++}
++
+ static void drawBuffers(_THIS)
+ {
+ 	if(this->hidden->buffer) {
+@@ -538,6 +712,18 @@
+ 
+ 		GSPGPU_FlushDataCache(spritesheet_tex.data, this->hidden->w*this->hidden->h*this->hidden->byteperpixel);
+ 
++		if (this->hidden->stereo) {
++			if (this->hidden->right_pixels && this->hidden->buffer_r) {
++				convertRightEye(this);
++				GSPGPU_FlushDataCache(this->hidden->buffer_r, this->hidden->w*this->hidden->h*this->hidden->byteperpixel);
++				C3D_SyncDisplayTransfer ((u32*)this->hidden->buffer_r, GX_BUFFER_DIM(this->hidden->w, this->hidden->h), (u32*)right_tex.data, GX_BUFFER_DIM(this->hidden->w, this->hidden->h), textureTranferFlags[this->hidden->mode]);
++				this->hidden->right_valid = true;
++			} else {
++				this->hidden->right_valid = false;
++			}
++			this->hidden->right_pixels = NULL; // one frame only
++		}
++
+ 		C3D_TexBind(0, &spritesheet_tex);
+ 		// Configure the first fragment shading substage to just pass through the texture color
+ 		// See https://www.opengl.org/sdk/docs/man2/xhtml/glTexEnv.xml for more insight
+@@ -648,12 +834,13 @@
+ */
+ void N3DS_VideoQuit(_THIS)
+ {
+-	if (privateVideoThreadHandle) {
+-		runThread = false;
+-		LightEvent_Signal(&privateVideoThreadEvent);
+-		threadJoin(privateVideoThreadHandle, U64_MAX);
+-		privateVideoThreadHandle = NULL;
++	stopVideoThread();
++	freeRightEye(this);
++	if (this->hidden->stereo) {
++		gfxSet3D(false);
++		this->hidden->stereo = false;
+ 	}
++	n3ds_device = NULL;
+ 	if (this->hidden->buffer)
+ 	{
+ 		linearFree(this->hidden->buffer);
+@@ -664,7 +851,8 @@
+ 		free(this->hidden->palettedbuffer);
+ 		this->hidden->palettedbuffer = NULL;
+ 	}
+-	this->hidden->currentVideoSurface->pixels = NULL; // set to buffer or to palettedbuffer, so now pointing to not allocated memory
++	if (this->hidden->currentVideoSurface)
++		this->hidden->currentVideoSurface->pixels = NULL; // set to buffer or to palettedbuffer, so now pointing to not allocated memory
+ 
+ 	sceneExit();
+ 	C3D_Fini();
+@@ -709,12 +897,13 @@
+ 	}
+ 
+ 	RenderClearColor = clearcolors[mode];
++	scene_scale = scale;
+ 
+ 	// Initialize the top screen render target
+ 	if (scale)
+-		VideoSurface1 = C3D_RenderTargetCreate(240*2, 400*2, mode, GPU_RB_DEPTH24_STENCIL8);
++		VideoSurface1 = C3D_RenderTargetCreate(240*2, 400*2, mode, -1);
+ 	else
+-		VideoSurface1 = C3D_RenderTargetCreate(240, 400, mode, GPU_RB_DEPTH24_STENCIL8);
++		VideoSurface1 = C3D_RenderTargetCreate(240, 400, mode, -1);
+ 	if(scale)
+ 		C3D_RenderTargetSetOutput(VideoSurface1, GFX_TOP, GFX_LEFT, displayTranferFlags[mode] | GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_XY));
+ 	else
+@@ -722,16 +911,17 @@
+ 
+ 	// Initialize the bottom screen render target
+ 	if (scale)
+-		VideoSurface2 = C3D_RenderTargetCreate(240*2, 320*2, mode, GPU_RB_DEPTH24_STENCIL8);
++		VideoSurface2 = C3D_RenderTargetCreate(240*2, 320*2, mode, -1);
+ 	else
+-		VideoSurface2 = C3D_RenderTargetCreate(240, 320, mode, GPU_RB_DEPTH24_STENCIL8);
++		VideoSurface2 = C3D_RenderTargetCreate(240, 320, mode, -1);
+ 	if (scale)
+ 		C3D_RenderTargetSetOutput(VideoSurface2, GFX_BOTTOM, GFX_LEFT, displayTranferFlags[mode] | GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_XY));
+ 	else
+ 		C3D_RenderTargetSetOutput(VideoSurface2, GFX_BOTTOM, GFX_LEFT, displayTranferFlags[mode] | GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO));
+ 
+-	// Configure depth test to overwrite pixels with the same depth (needed to draw overlapping sprites)
+-//	C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
++	// The targets have no depth buffers (each frame is one textured quad); at 2x scale the
++	// unused depth buffers took 2.7 MB of the 6 MB VRAM and left no room for the right eye.
++	C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_COLOR);
+ }
+ 
+ //---------------------------------------------------------------------------------
+diff --color -ruN a/src/video/n3ds/SDL_n3dsvideo.h b/src/video/n3ds/SDL_n3dsvideo.h
+--- a/src/video/n3ds/SDL_n3dsvideo.h
++++ b/src/video/n3ds/SDL_n3dsvideo.h
+@@ -58,6 +58,16 @@
+ 	SDL_Surface* currentVideoSurface;
+ // Video process flags
+ 	bool blockVideo;  // block video output and events handlings on SDL_QUIT
++// Stereoscopic 3D (top screen right eye)
++	bool stereo;                 // right-eye render target active (gfxSet3D on)
++	void *buffer_r;              // RGBA staging buffer for the right eye
++	const Uint8 *right_pixels;   // 8bpp right-eye frame for the next flip, or NULL
++	int right_pitch;
++	volatile bool right_valid;   // last uploaded frame had a distinct right eye
+ };
++
++/* N3DS-only extensions, see SDL_n3dsvideo.c */
++extern DECLSPEC int SDLCALL SDL_N3DS_SetStereo(int enable);
++extern DECLSPEC void SDLCALL SDL_N3DS_SetRightEyeFrame(const Uint8 *pixels, int pitch);
+ 
+ #endif /* _SDL_n3dsvideo_h */

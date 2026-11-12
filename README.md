@@ -21,6 +21,14 @@ A Nintendo 3DS port of Descent I & Descent II.  This is a fork of [DXX-Switch](h
 - Descent1/2 will attempt to first play music from /3ds/D1/wav and /3ds/D2/wav, then /3ds/D1/mp3 and /3ds/D2/mp3
 - The names (not including the file extension) need to match the names of the midi songs but can be replaced with your own music if desired
 
+## Stereoscopic 3D
+- The mine is rendered once per eye on the top screen, using the engine's original eye-offset code for VR headsets. The 3D slider sets the depth; with the slider down the game renders once, at full speed
+- The mine sits behind the screen and the HUD/cockpit at screen depth. Menus, briefings, the automap and movies are shown flat
+- Rendering twice costs frame rate; on a New 3DS it slows a little in busy scenes but stays playable
+- The bottom-screen log shows the 3D state, e.g. `3D: on - eye 0.25 units, shift 5 px, view 320x240`, or why it's off
+- Optional tuning: a `stereo3d.cfg` in `/3ds/D1/` or `/3ds/D2/` with any of `Separation=0.25` (half the eye distance in mine units at full slider; higher is deeper), `Convergence=14` (distance that appears at screen depth; corridors are about 20 units wide), `Enabled=0` (keep it off)
+- Needs SDL built with [3ds/sdl-n3ds-stereo.patch](3ds/sdl-n3ds-stereo.patch), see below. With devkitPro's stock `3ds-sdl` the game builds and runs in 2D
+
 ## Known issues and missing features
 - Unable to get a working .cia version (I think his is due to the large amount of stack space used by DXX Rebirth (around 4-8MB), default 3DS stack space is 32KB. Setting `__stacksize__` to 8MB works fine with homebrew browser, but .cia builds automatically crash) 
 - Multiple save files don't work (currently hardcoded to `player.plr`)
@@ -51,6 +59,12 @@ root of the repository
 
 ## Install libphysfs for ctru
 Follow instructions from [physfs-3ds](https://github.com/rossmeikleham/physfs-3ds) repo page.
+
+## Rebuild SDL with stereoscopic 3D (optional)
+Adds a right-eye render target and texture to devkitPro's 3DS SDL video driver and installs it over the `3ds-sdl` package (`dkp-pacman -S 3ds-sdl` puts the stock one back):
+```
+3ds/build-sdl-stereo.sh
+```
 
 ## Install bannertool + makerom (required for cia builds, ignore for 3dsx only)
 - Build [bannertool](https://github.com/Steveice10/bannertool) and add it to the PATH
