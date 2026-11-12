@@ -185,6 +185,11 @@ void print_commandline_help()
 }
 
 int Quitting = 0;
+#ifdef __3DS__
+// Set when the system asks the app to quit (HOME menu > Close, power off): nobody
+// can answer an "Abort game?" box then, and waiting for one hangs the close.
+static int quit_requested_by_system = 0;
+#endif
 
 // Default event handler for everything except the editor
 int standard_handler(d_event *event)
@@ -200,6 +205,12 @@ int standard_handler(d_event *event)
 		if (wind == Game_wind)
 		{
 			int choice;
+#ifdef __3DS__
+			if (quit_requested_by_system)
+				GameArg.SysAutoDemo = 0;
+			else
+#endif
+			{
 			Quitting = 0;
 			choice=nm_messagebox( NULL, 2, TXT_YES, TXT_NO, TXT_ABORT_GAME );
 			if (choice != 0)
@@ -208,6 +219,7 @@ int standard_handler(d_event *event)
 			{
 				GameArg.SysAutoDemo = 0;
 				Quitting = 1;
+			}
 			}
 		}
 		
@@ -275,6 +287,10 @@ int standard_handler(d_event *event)
 			return 1;
 
 		case EVENT_QUIT:
+#ifdef __3DS__
+			quit_requested_by_system = 1;	// only SDL_QUIT sends EVENT_QUIT
+			GameArg.SysAutoDemo = 0;
+#endif
 #ifdef EDITOR
 			if (SafetyCheck())
 #endif
