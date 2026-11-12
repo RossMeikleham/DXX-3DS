@@ -647,6 +647,7 @@ int kconfig_key_command(window *wind, d_event *event, kc_menu *menu)
 				ubyte kb[MAX_CONTROLS];
 				memcpy(kb, DefaultKeySettings[0], sizeof(kb));
 				kc_3ds_zlzr_bank(kb);
+				kc_3ds_buttons(kb);
 				for (i=0; i<NUM_KEY_CONTROLS; i++ )
 					menu->items[i].value = kb[i];
 #else
@@ -1893,6 +1894,30 @@ int kc_3ds_zlzr_bank(ubyte *kb)
 	return 1;
 }
 
+static int kc_3ds_key_used(ubyte *kb, int key)
+{
+	int i;
+	for (i = 0; i < MAX_CONTROLS; i++)
+		if (kb[i] == key)
+			return 1;
+	return 0;
+}
+
+/*
+ * D-pad: weapon selection (gamecntl.c), so its keys come off their default pitch
+ * (UP/DOWN) and bank (Q/E) slots; pitch is on the circle pad and bank on ZL/ZR.
+ * X / Y: second Fire flare / Drop bomb key, if those slots and keys are free.
+ */
+void kc_3ds_buttons(ubyte *kb)
+{
+	if (kb[0] == KEY_UP)   kb[0] = 255;	// Pitch forward
+	if (kb[2] == KEY_DOWN) kb[2] = 255;	// Pitch backward
+	if (kb[20] == KEY_Q)   kb[20] = 255;	// Bank left
+	if (kb[22] == KEY_E)   kb[22] = 255;	// Bank right
+	if (kb[29] == 255 && !kc_3ds_key_used(kb, KEY_X)) kb[29] = KEY_X;	// Fire flare
+	if (kb[35] == 255 && !kc_3ds_key_used(kb, KEY_Y)) kb[35] = KEY_Y;	// Drop bomb
+}
+
 /*
  * 3DS defaults applied to the loaded player: C-stick slide, ZL/ZR bank, and dead
  * zones for the sticks. A dead zone of 0 is raised (the circle pad doesn't return
@@ -1908,6 +1933,7 @@ void kc_3ds_defaults(void)
 			PlayerCfg.JoystickDead[3] = 1;
 	}
 	kc_3ds_zlzr_bank(PlayerCfg.KeySettings[0]);
+	kc_3ds_buttons(PlayerCfg.KeySettings[0]);
 	if (!PlayerCfg.JoystickDead[0])	// circle pad X: turn
 		PlayerCfg.JoystickDead[0] = 2;
 	if (!PlayerCfg.JoystickDead[1])	// circle pad Y: pitch

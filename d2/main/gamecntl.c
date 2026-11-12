@@ -1004,8 +1004,42 @@ int HandleSystemKey(int key)
 
 extern void DropFlag();
 
+#ifdef __3DS__
+/*
+ * D-pad weapon selection: step to the next / previous weapon slot the player has,
+ * in slot order (what the number keys select), wrapping around.
+ */
+static void cycle_weapon_3ds(int secondary, int dir)
+{
+	int n = secondary ? MAX_SECONDARY_WEAPONS : MAX_PRIMARY_WEAPONS;
+	int cur = secondary ? Secondary_weapon : Primary_weapon;
+	int i, w;
+
+	if (Player_is_dead)
+		return;
+	for (i = 1; i < n; i++)
+	{
+		w = (cur + dir * i + n) % n;
+		if (player_has_weapon(w, secondary) == HAS_ALL)
+		{
+			select_weapon(w, secondary, 1, 1);
+			return;
+		}
+	}
+}
+#endif
+
 int HandleGameKey(int key)
 {
+#ifdef __3DS__
+	// D-pad (keys E / Q / UP / DOWN in the 3DS key table) selects weapons.
+	switch (key) {
+		case KEY_E:    cycle_weapon_3ds(0, 1);  return 1;
+		case KEY_Q:    cycle_weapon_3ds(0, -1); return 1;
+		case KEY_DOWN: cycle_weapon_3ds(1, 1);  return 1;
+		case KEY_UP:   cycle_weapon_3ds(1, -1); return 1;
+	}
+#endif
 	switch (key) {
 
 		case KEY_1 + KEY_SHIFTED:
