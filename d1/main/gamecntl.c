@@ -504,6 +504,24 @@ int HandleSystemKey(int key)
 			case KEY_ESC:
 			{
 				int choice;
+#ifdef __3DS__
+				// SELECT is Escape. Saving (Alt+F2), loading (Alt+F3) and options (F2)
+				// have no button on a 3DS, so Escape opens a game menu instead.
+				newmenu_item m[4];
+				memset(m, 0, sizeof(m));
+				m[0].type = NM_TYPE_MENU; m[0].text = "Save game";
+				m[1].type = NM_TYPE_MENU; m[1].text = "Load game";
+				m[2].type = NM_TYPE_MENU; m[2].text = "Options";
+				m[3].type = NM_TYPE_MENU; m[3].text = "Abort game";
+				switch (newmenu_do(NULL, "Game menu", 4, m, NULL, NULL))
+				{
+					case 0: state_save_all(0); return 1;
+					case 1: state_restore_all(1); return 1;
+					case 2: do_options_menu(); return 1;
+					case 3: break;
+					default: return 1;
+				}
+#endif
 				choice=nm_messagebox( NULL, 2, TXT_YES, TXT_NO, TXT_ABORT_GAME );
 				if (choice == 0)
 					window_close(Game_wind);
