@@ -17,6 +17,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
  *
  */
 
+#include "stereo3d.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -763,7 +764,8 @@ void game_render_frame_mono(int flip)
 		Viewer = Guided_missile[Player_num];
 
 		update_rendered_data(0, Viewer, 0, 0);
-		render_frame(0, 0);
+		render_frame(Stereo_eye_offset, 0);
+		stereo3d_shift_view(&Screen_3d_window);
 
 		wake_up_rendered_objects(Viewer, 0);
 #ifdef NETWORK
@@ -793,7 +795,8 @@ void game_render_frame_mono(int flip)
 			return;
 		}
 		update_rendered_data(0, Viewer, Rear_view, 0);
-		render_frame(0, 0);
+		render_frame(Stereo_eye_offset, 0);
+		stereo3d_shift_view(&Screen_3d_window);
 	}
 
 	gr_set_current_canvas(&Screen_3d_window);
@@ -916,6 +919,30 @@ void game_render_frame()
 {
 	set_screen_mode( SCREEN_GAME );
 	play_homing_warning();
+#ifdef __3DS__
+	if (stereo3d_begin_frame())
+	{
+		int redraw = force_cockpit_redraw;
+
+		stereo3d_set_eye(-1);
+		game_render_frame_mono(GameArg.DbgUseDoubleBuffer);
+		if (force_cockpit_redraw == redraw)	// a cockpit switch aborted the frame: show it flat
+		{
+			fix frame_time = FrameTime;
+
+			// HUD/gauge code advances its timers while drawing; freeze time for the
+			// second pass so messages, fades and end-level timers run at normal speed.
+			FrameTime = 0;
+			stereo3d_set_eye(1);
+			game_render_frame_mono(GameArg.DbgUseDoubleBuffer);
+			stereo3d_end_frame(1);
+			FrameTime = frame_time;
+		}
+		else
+			stereo3d_end_frame(0);
+		return;
+	}
+#endif
 	game_render_frame_mono(GameArg.DbgUseDoubleBuffer);
 }
 

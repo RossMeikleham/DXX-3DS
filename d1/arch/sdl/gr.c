@@ -4,6 +4,7 @@
  *
  */
 
+#include "stereo3d.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -32,6 +33,9 @@ void gr_flip()
 	dest.h = src.h = canvas->h;
 
 	SDL_BlitSurface(canvas, &src, screen, &dest);
+#ifdef __3DS__
+	stereo3d_flip();
+#endif
 	SDL_Flip(screen);
 }
 
@@ -141,6 +145,10 @@ int gr_set_mode(u_int32_t mode)
 	gamefont_choose_game_font(w,h);
 	gr_palette_load(gr_palette);
 
+#ifdef __3DS__
+	stereo3d_init();
+#endif
+
 	return 0;
 }
 
@@ -216,6 +224,9 @@ void gr_close()
 	if (gr_installed==1)
 	{
 		gr_installed = 0;
+#ifdef __3DS__
+		stereo3d_close();
+#endif
 		d_free(grd_curscreen);
 		SDL_ShowCursor(1);
 		SDL_FreeSurface(canvas);
