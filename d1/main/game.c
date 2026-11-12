@@ -24,6 +24,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <SDL/SDL.h>
 #include <setjmp.h>
 
+#include "panel3ds.h"
 #include "pstypes.h"
 #include "console.h"
 #include "gr.h"
@@ -1014,6 +1015,9 @@ int game_handler(window *wind, d_event *event, void *data)
 			break;
 
 		case EVENT_WINDOW_CLOSE:
+#ifdef __3DS__
+			panel3ds_close();
+#endif
 			digi_stop_digi_sounds();
 
 			if ( (Newdemo_state == ND_STATE_RECORDING) || (Newdemo_state == ND_STATE_PAUSED) )
