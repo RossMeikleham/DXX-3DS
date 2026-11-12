@@ -90,6 +90,9 @@ int new_player_config()
 #endif
 	memcpy(PlayerCfg.KeySettings, DefaultKeySettings, sizeof(DefaultKeySettings));
 	memcpy(PlayerCfg.KeySettingsD2X, DefaultKeySettingsD2X, sizeof(DefaultKeySettingsD2X));
+#ifdef __3DS__
+	kc_3ds_cstick_defaults();
+#endif
 	kc_set_controls();
 
 	PlayerCfg.DefaultDifficulty = 1;
@@ -781,6 +784,9 @@ int read_player_file()
 	filename[strlen(filename) - 4] = 0;
 	strcat(filename, ".plx");
 	read_player_d2x(filename);
+#ifdef __3DS__
+	kc_3ds_cstick_defaults();
+#endif
 	kc_set_controls();
 
 	return EZERO;

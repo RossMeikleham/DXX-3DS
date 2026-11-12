@@ -675,8 +675,18 @@ int kconfig_key_command(window *wind, d_event *event, kc_menu *menu)
 					menu->items[i].value=DefaultKeySettings[0][i];
 
 			if ( menu->items==kc_joystick )
+			{
+#ifdef __3DS__
+				ubyte joy[MAX_CONTROLS];
+				memcpy(joy, DefaultKeySettings[1], sizeof(joy));
+				kc_3ds_cstick_slide(joy);
+				for (i=0; i<NUM_JOYSTICK_CONTROLS; i++ )
+					menu->items[i].value = joy[i];
+#else
 				for (i=0; i<NUM_JOYSTICK_CONTROLS; i++ )
 					menu->items[i].value = DefaultKeySettings[1][i];
+#endif
+			}
 
 			if ( menu->items==kc_mouse )
 				for (i=0; i<NUM_MOUSE_CONTROLS; i++ )
@@ -1861,6 +1871,37 @@ void reset_cruise(void)
 	Cruise_speed=0;
 }
 
+
+#ifdef __3DS__
+/*
+ * New 3DS C-stick: SDL reports it as joystick axes 2 (X) and 3 (Y). Bind it to
+ * Slide L/R and Slide U/D unless the player already bound either slide axis.
+ * SDL reports stick-up as negative, so Slide U/D is inverted to slide up when the
+ * stick is pushed up. Returns 1 if the bindings were changed.
+ */
+int kc_3ds_cstick_slide(ubyte *joy)
+{
+	if (joy[17] != 255 || joy[19] != 255)
+		return 0;
+	joy[17] = 2;	// Slide L/R axis
+	joy[18] = 0;
+	joy[19] = 3;	// Slide U/D axis
+	joy[20] = 1;	// inverted
+	return 1;
+}
+
+// Apply to the loaded player's settings, with a small dead zone for the C-stick nub.
+void kc_3ds_cstick_defaults(void)
+{
+	if (kc_3ds_cstick_slide(PlayerCfg.KeySettings[1]))
+	{
+		if (!PlayerCfg.JoystickDead[2])
+			PlayerCfg.JoystickDead[2] = 1;
+		if (!PlayerCfg.JoystickDead[3])
+			PlayerCfg.JoystickDead[3] = 1;
+	}
+}
+#endif
 
 void kc_set_controls()
 {

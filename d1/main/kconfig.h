@@ -60,6 +60,10 @@ extern const ubyte DefaultKeySettingsD1X[MAX_D1X_CONTROLS];
 extern const ubyte DefaultKeySettings[3][MAX_CONTROLS];
 
 extern void kc_set_controls();
+#ifdef __3DS__
+extern int kc_3ds_cstick_slide(ubyte *joy);
+extern void kc_3ds_cstick_defaults(void);
+#endif
 
 //set the cruise speed to zero
 extern void reset_cruise(void);
