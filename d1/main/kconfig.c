@@ -642,8 +642,18 @@ int kconfig_key_command(window *wind, d_event *event, kc_menu *menu)
 			return 1;
 		case KEY_CTRLED+KEY_R:	
 			if ( menu->items==kc_keyboard )
+			{
+#ifdef __3DS__
+				ubyte kb[MAX_CONTROLS];
+				memcpy(kb, DefaultKeySettings[0], sizeof(kb));
+				kc_3ds_zlzr_bank(kb);
+				for (i=0; i<NUM_KEY_CONTROLS; i++ )
+					menu->items[i].value = kb[i];
+#else
 				for (i=0; i<NUM_KEY_CONTROLS; i++ )
 					menu->items[i].value=DefaultKeySettings[0][i];
+#endif
+			}
 
 			if ( menu->items==kc_joystick )
 			{
@@ -1864,8 +1874,31 @@ int kc_3ds_cstick_slide(ubyte *joy)
 	return 1;
 }
 
-// Apply to the loaded player's settings, with a small dead zone for the C-stick nub.
-void kc_3ds_cstick_defaults(void)
+/*
+ * ZL / ZR (SDL left/right shift) as the second Bank left / Bank right keys. Those
+ * slots default to keypad 7 / 9, which a 3DS doesn't have. Left alone if the player
+ * changed either slot or already uses a shift key. Returns 1 if changed.
+ */
+int kc_3ds_zlzr_bank(ubyte *kb)
+{
+	int i;
+
+	if ((kb[21] != KEY_PAD7 && kb[21] != 255) || (kb[23] != KEY_PAD9 && kb[23] != 255))
+		return 0;
+	for (i = 0; i < MAX_CONTROLS; i++)
+		if (kb[i] == KEY_LSHIFT || kb[i] == KEY_RSHIFT)
+			return 0;
+	kb[21] = KEY_LSHIFT;	// ZL: bank left
+	kb[23] = KEY_RSHIFT;	// ZR: bank right
+	return 1;
+}
+
+/*
+ * 3DS defaults applied to the loaded player: C-stick slide, ZL/ZR bank, and dead
+ * zones for the sticks. A dead zone of 0 is raised (the circle pad doesn't return
+ * exactly to centre and drifts); any other value the player chose is kept.
+ */
+void kc_3ds_defaults(void)
 {
 	if (kc_3ds_cstick_slide(PlayerCfg.KeySettings[1]))
 	{
@@ -1874,6 +1907,11 @@ void kc_3ds_cstick_defaults(void)
 		if (!PlayerCfg.JoystickDead[3])
 			PlayerCfg.JoystickDead[3] = 1;
 	}
+	kc_3ds_zlzr_bank(PlayerCfg.KeySettings[0]);
+	if (!PlayerCfg.JoystickDead[0])	// circle pad X: turn
+		PlayerCfg.JoystickDead[0] = 2;
+	if (!PlayerCfg.JoystickDead[1])	// circle pad Y: pitch
+		PlayerCfg.JoystickDead[1] = 2;
 }
 #endif
 

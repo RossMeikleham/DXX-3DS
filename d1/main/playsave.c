@@ -76,7 +76,7 @@ int new_player_config()
 	memcpy(PlayerCfg.KeySettings, DefaultKeySettings, sizeof(DefaultKeySettings));
 	memcpy(PlayerCfg.KeySettingsD1X, DefaultKeySettingsD1X, sizeof(DefaultKeySettingsD1X));
 #ifdef __3DS__
-	kc_3ds_cstick_defaults();
+	kc_3ds_defaults();
 #endif
 	kc_set_controls();
 
@@ -1007,7 +1007,7 @@ int read_player_file()
 	strcat(filename, ".plx");
 	read_player_d1x(filename);
 #ifdef __3DS__
-	kc_3ds_cstick_defaults();
+	kc_3ds_defaults();
 #endif
 	kc_set_controls();
 
