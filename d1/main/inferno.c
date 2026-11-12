@@ -36,8 +36,6 @@ char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE CORPORAT
 
 const unsigned int __stacksize__ = 8 * 1024 * 1024; // 8MB
 
-PrintConsole topScreen;
-PrintConsole bottomScreen;
 
 #endif
 
@@ -301,11 +299,10 @@ int main(int argc, char *argv[])
 
 #ifdef __3DS__
     mcuHwcInit();
-    gfxInitDefault();
-
-    consoleInit(GFX_TOP, &topScreen);
-    consoleInit(GFX_BOTTOM, &bottomScreen);
-    consoleSelect(&topScreen);
+    // gfx and the bottom-screen console are set up by SDL (SDL_CONSOLEBOTTOM).
+    // Initialising them here first left both consoles pointing at framebuffers
+    // that SDL then freed and reallocated, so printf()/con_printf() wrote into
+    // freed linear memory (shared with GPU textures and DSP audio buffers).
 
 	osSetSpeedupEnable(1); // Should get away with removing this
 #endif

@@ -189,6 +189,10 @@ int gr_init(int mode)
 	if (GameArg.DbgSdlASyncBlit)
 		sdl_video_flags|=SDL_ASYNCBLIT;
 
+#ifdef __3DS__
+	sdl_video_flags|=SDL_CONSOLEBOTTOM;
+#endif
+
 	// Set the mode.
 	if ((retcode=gr_set_mode(mode)))
 		return retcode;

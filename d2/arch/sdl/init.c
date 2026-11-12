@@ -5,6 +5,10 @@
 #endif
 
 #include <SDL/SDL.h>
+#ifdef __3DS__
+#include <3ds.h>
+#include <sys/iosupport.h>
+#endif
 #include "songs.h"
 #include "key.h"
 #include "digi.h"
@@ -27,20 +31,20 @@ void arch_close(void)
 
 	mouse_close();
 
-#ifdef __3DS__
-	printf("Press the home button to exit...\n");
-	while (aptMainLoop()) 
-    {
-		svcSleepThread(1000UL * 1000UL * 100UL);
-    }
-#endif
-
 	if (!GameArg.SndNoSound)
 	{
 		digi_close();
 	}
 
 	key_close();
+
+#ifdef __3DS__
+	// SDL_Quit() releases the framebuffers the console draws into. Send stdout and
+	// stderr to the null device first so printf()s from later atexit handlers
+	// (con_close, mem leak reports) can't write into freed memory.
+	consoleDebugInit(debugDevice_NULL);
+	devoptab_list[STD_OUT] = devoptab_list[STD_ERR];
+#endif
 
 	SDL_Quit();
 }
