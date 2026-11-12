@@ -330,6 +330,10 @@ jmp_buf LeaveEvents;
 int main(int argc, char *argv[])
 {
 #ifdef __3DS__
+    // Launched as a CIA from the HOME Menu there is no argv (argc 0, argv NULL);
+    // only the Homebrew Launcher passes one. argv[0] is used as PROGNAME below.
+    static char *n3ds_argv[] = { "sdmc:/3ds/D2/d2x-3ds", NULL };
+    if (argc < 1 || !argv || !argv[0]) { argc = 1; argv = n3ds_argv; }
     mcuHwcInit();
     // gfx and the bottom-screen console are set up by SDL (SDL_CONSOLEBOTTOM).
     // Initialising them here first left both consoles pointing at framebuffers
