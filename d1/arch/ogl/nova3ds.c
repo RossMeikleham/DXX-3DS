@@ -57,56 +57,17 @@ void nova3ds_set_stereo(int on)
 
 /*
  * Clear the right-eye target to black. The game's own clear (glClear after each swap)
- * only reaches the left eye's surface, and NovaGL turns a glClear in the middle of a
- * frame into a quad drawn through the current GL state, which on hardware left the
- * right eye's letterbox bars and sky (exit sequence) showing stale memory: bright
- * green. Draw the quad explicitly: whole screen, identity matrices, no depth, blend,
- * alpha test, texture or culling.
+ * only reaches the left eye's surface. A glClear in the middle of a frame becomes a
+ * quad drawn through the current GL state, and on hardware neither that nor an
+ * explicit black quad cleared the right eye: the exit sequence's letterbox bars and
+ * sky showed stale memory (bright green). Asking for the stencil too makes NovaGL use
+ * the hardware memory fill (C3D_RenderTargetClear after a frame split), the same
+ * clear the left eye gets at the start of each frame.
  */
 static void clear_right_eye(void)
 {
-	static const GLfloat quad[] = { -1, -1, 0,  1, -1, 0,  1, 1, 0,  -1, -1, 0,  1, 1, 0,  -1, 1, 0 };
-	static const GLenum caps[] = { GL_DEPTH_TEST, GL_BLEND, GL_ALPHA_TEST, GL_TEXTURE_2D, GL_CULL_FACE, GL_SCISSOR_TEST, GL_FOG };
-	GLboolean was[sizeof(caps) / sizeof(caps[0])];
-	GLboolean va = glIsEnabled(GL_VERTEX_ARRAY), ca = glIsEnabled(GL_COLOR_ARRAY), ta = glIsEnabled(GL_TEXTURE_COORD_ARRAY);
-	GLint vp[4];
-	unsigned i;
-
-	glGetIntegerv(GL_VIEWPORT, vp);
-	for (i = 0; i < sizeof(caps) / sizeof(caps[0]); i++)
-	{
-		was[i] = glIsEnabled(caps[i]);
-		if (was[i])
-			glDisable(caps[i]);
-	}
-	glViewport(0, 0, 400, 240);
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glColor4f(0, 0, 0, 1);
-	glVertexPointer(3, GL_FLOAT, 0, quad);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glColor4f(1, 1, 1, 1);
-	if (!va) glDisableClientState(GL_VERTEX_ARRAY);
-	if (ca) glEnableClientState(GL_COLOR_ARRAY);
-	if (ta) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-	glViewport(vp[0], vp[1], vp[2], vp[3]);
-	for (i = 0; i < sizeof(caps) / sizeof(caps[0]); i++)
-		if (was[i])
-			glEnable(caps[i]);
-	glClear(GL_DEPTH_BUFFER_BIT);	// the game clears depth per 3D view too; this covers the HUD pass
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
 void nova3ds_begin_eye(int eye)

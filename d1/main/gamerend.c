@@ -496,6 +496,17 @@ void update_cockpits();
 //render a frame for the game
 void game_render_frame_mono(int flip)
 {
+#if defined(__3DS__) && defined(OGL)
+	// The exit sequence's letterbox view leaves the bars above and below the 3D view,
+	// and the sky outside the mine, undrawn. On hardware the per-frame glClear doesn't
+	// reach NovaGL's left-eye surface, so they showed old memory (bright green). Paint
+	// the screen black first, with the game's own fill (as the loading box does).
+	if (PlayerCfg.CockpitMode[1] == CM_LETTERBOX)
+	{
+		gr_set_current_canvas(NULL);
+		gr_clear_canvas(BM_XRGB(0, 0, 0));
+	}
+#endif
 	gr_set_current_canvas(&Screen_3d_window);
 	
 	render_frame(Stereo_eye_offset);
