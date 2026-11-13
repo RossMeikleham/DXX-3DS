@@ -665,6 +665,10 @@ void key_handler(SDL_KeyboardEvent *kevent)
     } else {
         return;
     }
+    // Unmapped bits (touch, C-stick, ...) would match the table's SDLK_UNKNOWN
+    // placeholder entries, the last of which is RIGHT: "turn right".
+    if (event_keysym == SDLK_UNKNOWN)
+        return;
     #else
         event_keysym = kevent->keysym.sym;
     #endif

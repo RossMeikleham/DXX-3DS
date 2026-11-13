@@ -67,6 +67,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "powerup.h"
 #include "songs.h"
 #include "newmenu.h"
+#include "panel3ds.h"
 #include "gamefont.h"
 #include "endlevel.h"
 #include "config.h"
@@ -495,6 +496,41 @@ int HandleDemoKey(int key)
 }
 
 //this is for system-level keys, such as help, etc.
+#ifdef __3DS__
+/*
+ * Saving (Alt+F2), loading (Alt+F3) and options (F2) have no button on a 3DS, so
+ * SELECT (Escape) and the bottom-screen panel open this menu. Returns 1 if the
+ * player aborted the game (the game window is closed).
+ */
+void game_save_3ds(void) { if (!Player_is_dead) state_save_all(0); }
+void game_load_3ds(void) { state_restore_all(1); }
+
+int game_menu_3ds(void)
+{
+	newmenu_item m[4];
+
+	memset(m, 0, sizeof(m));
+	m[0].type = NM_TYPE_MENU; m[0].text = "Save game";
+	m[1].type = NM_TYPE_MENU; m[1].text = "Load game";
+	m[2].type = NM_TYPE_MENU; m[2].text = "Options";
+	m[3].type = NM_TYPE_MENU; m[3].text = "Abort game";
+	switch (newmenu_do(NULL, "Game menu", 4, m, NULL, NULL))
+	{
+		case 0: game_save_3ds(); break;
+		case 1: game_load_3ds(); break;
+		case 2: do_options_menu(); break;
+		case 3:
+			if (nm_messagebox(NULL, 2, TXT_YES, TXT_NO, TXT_ABORT_GAME) == 0)
+			{
+				window_close(Game_wind);
+				return 1;
+			}
+			break;
+	}
+	return 0;
+}
+#endif
+
 //returns 1 if screen changed
 int HandleSystemKey(int key)
 {
@@ -504,6 +540,11 @@ int HandleSystemKey(int key)
 			case KEY_ESC:
 			{
 				int choice;
+#ifdef __3DS__
+				// SELECT is Escape: open the game menu instead of only "Abort game?".
+				game_menu_3ds();
+				return 1;
+#endif
 				choice=nm_messagebox( NULL, 2, TXT_YES, TXT_NO, TXT_ABORT_GAME );
 				if (choice == 0)
 					window_close(Game_wind);
@@ -689,8 +730,42 @@ int HandleSystemKey(int key)
 	return 1;
 }
 
+#ifdef __3DS__
+/*
+ * D-pad weapon selection: step to the next / previous weapon slot the player has,
+ * in slot order (what the number keys select), wrapping around.
+ */
+static void cycle_weapon_3ds(int secondary, int dir)
+{
+	int n = secondary ? MAX_SECONDARY_WEAPONS : MAX_PRIMARY_WEAPONS;
+	int cur = secondary ? Secondary_weapon : Primary_weapon;
+	int i, w;
+
+	if (Player_is_dead)
+		return;
+	for (i = 1; i < n; i++)
+	{
+		w = (cur + dir * i + n) % n;
+		if (player_has_weapon(w, secondary) == HAS_ALL)
+		{
+			select_weapon(w, secondary, 1, 1);
+			return;
+		}
+	}
+}
+#endif
+
 int HandleGameKey(int key)
 {
+#ifdef __3DS__
+	// D-pad (keys E / Q / UP / DOWN in the 3DS key table) selects weapons.
+	switch (key) {
+		case KEY_E:    cycle_weapon_3ds(0, 1);  return 1;
+		case KEY_Q:    cycle_weapon_3ds(0, -1); return 1;
+		case KEY_DOWN: cycle_weapon_3ds(1, 1);  return 1;
+		case KEY_UP:   cycle_weapon_3ds(1, -1); return 1;
+	}
+#endif
 	int new_obs = Current_obs_player;
 
 	switch (key) {
@@ -1460,6 +1535,11 @@ int ReadControls(d_event *event)
 		if (call_default_handler(event))
 			return 1;
 	}
+
+#ifdef __3DS__
+	if (event->type == EVENT_IDLE && panel3ds_frame())
+		return 1;	// aborted from the panel's menu
+#endif
 
 	int should_read_controls;
 	if (!Endlevel_sequence && !Player_is_dead && (Newdemo_state != ND_STATE_PLAYBACK)) {

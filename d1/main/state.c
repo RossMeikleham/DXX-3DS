@@ -17,6 +17,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
  *
  */
 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -615,7 +616,12 @@ int state_get_savegame_filename(char * fname, char * dsc, char * caption, int bl
 			if (dsc == NULL) m[i+1].type = NM_TYPE_TEXT;
 		}
 		if (dsc != NULL) {
+#ifdef __3DS__
+			// No keyboard: pick a slot with A and the description is generated.
+			m[i+1].type = NM_TYPE_MENU;
+#else
 			m[i+1].type = NM_TYPE_INPUT_MENU;
+#endif
 		}
 		m[i+1].text_len = DESC_LENGTH-1;
 		m[i+1].text = desc[i];
@@ -643,7 +649,19 @@ int state_get_savegame_filename(char * fname, char * dsc, char * caption, int bl
 
 	if (choice > 0) {
 		strcpy( fname, filename[choice-1] );
+#ifdef __3DS__
+		if ( dsc != NULL ) {
+			time_t now = time(NULL);
+			struct tm *t = localtime(&now);
+			if (t)
+				snprintf(dsc, DESC_LENGTH, "Lvl %d %02d/%02d %02d:%02d", Current_level_num,
+				         t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min);
+			else
+				snprintf(dsc, DESC_LENGTH, "Level %d", Current_level_num);
+		}
+#else
 		if ( dsc != NULL ) strcpy( dsc, desc[choice-1] );
+#endif
 		state_quick_item = state_default_item = choice - 1;
 		return choice;
 	}

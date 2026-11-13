@@ -551,9 +551,17 @@ extern void ogl_loadbmtexture(grs_bitmap *bm);
 // This actually renders the new cockpit onto the screen.
 void update_cockpits()
 {
-	grs_bitmap *bm;
-	PIGGY_PAGE_IN(cockpit_bitmap[PlayerCfg.CockpitMode[1]]);
-	bm = &GameBitmaps[cockpit_bitmap[PlayerCfg.CockpitMode[1]].index];
+	grs_bitmap *bm = NULL;
+
+	// Only the cockpit, rear view and status bar have a bitmap. cockpit_bitmap[] has
+	// N_COCKPIT_BITMAPS (4) entries, and the exit sequence's CM_LETTERBOX (4) is past
+	// the end: it read a junk bitmap index, and paging that in crashed on the 3DS.
+	if (PlayerCfg.CockpitMode[1] == CM_FULL_COCKPIT || PlayerCfg.CockpitMode[1] == CM_REAR_VIEW ||
+	    PlayerCfg.CockpitMode[1] == CM_STATUS_BAR)
+	{
+		PIGGY_PAGE_IN(cockpit_bitmap[PlayerCfg.CockpitMode[1]]);
+		bm = &GameBitmaps[cockpit_bitmap[PlayerCfg.CockpitMode[1]].index];
+	}
 
 	switch( PlayerCfg.CockpitMode[1] )	{
 		case CM_FULL_COCKPIT:

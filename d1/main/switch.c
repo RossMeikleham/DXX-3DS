@@ -140,15 +140,7 @@ int check_trigger_sub(int trigger_num, int pnum, int shot)
 		}
 
 		if (Triggers[trigger_num].flags & TRIGGER_EXIT) {
-#ifdef __3DS__
-            // 3DS crashes when end level sequence is about to switch
-            // to rear-view camera, have a feeling this is to do with
-            // screen-res stuff. A hack to avoid this is to just
-            // immediately end the level instead of doing the sequence
-            PlayerFinishedLevel(0);
-#else			
-            start_endlevel_sequence();
-#endif
+			start_endlevel_sequence();
 		}
 
 		if (Triggers[trigger_num].flags & TRIGGER_SECRET_EXIT) {
