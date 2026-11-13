@@ -301,6 +301,12 @@ int standard_handler(d_event *event)
 #ifdef __3DS__
 			n3ds_system_quit = 1;	// only SDL_QUIT sends EVENT_QUIT
 			GameArg.SysAutoDemo = 0;
+			// Leave right away. Closing the windows one at a time lets the game carry on:
+			// from the end-of-level score screen it goes on to load the next level, which
+			// waits for a GPU the app no longer has (it hung there). exit() still runs
+			// arch_close() (atexit), which skips the GPU and DSP waits.
+			WriteConfigFile();
+			exit(0);
 #endif
 #ifdef EDITOR
 			if (SafetyCheck())
