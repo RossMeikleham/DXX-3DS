@@ -55,6 +55,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "vers_id.h"
 #include "timer.h"
 #include "playsave.h"
+#ifdef __3DS__
+#include "kbd3ds.h"
+#endif
 #include "automap.h"
 #include "rbaudio.h"
 
@@ -864,6 +867,44 @@ int newmenu_mouse(window *wind, d_event *event, newmenu *menu, int button)
 	return 0;
 }
 
+#ifdef __3DS__
+// Edit a text or number field with the system keyboard. Characters the field
+// doesn't accept are dropped (a space becomes '_' where allowed, as when typing).
+static int kbd3ds_edit_item(newmenu *menu, newmenu_item *item)
+{
+	const char *hint = menu->subtitle ? menu->subtitle : menu->title;
+	int i, n;
+
+	if (item->type == NM_TYPE_INPUT_MENU && !d_strnicmp(item->saved_text, TXT_EMPTY, strlen(TXT_EMPTY)))
+		item->text[0] = 0;
+	if (!kbd3ds_input(item->text, item->text_len, hint))
+		return 0;
+	for (i = n = 0; item->text[i]; i++)
+	{
+		int c = (unsigned char)item->text[i];
+
+		if (!char_allowed(c) && c == ' ' && char_allowed('_'))
+			c = '_';
+		if (char_allowed(c))
+			item->text[n++] = c;
+	}
+	item->text[n] = 0;
+	item->value = n;	// the input cursor
+	return 1;
+}
+
+// 1 if the current item is the only thing in the menu that can be changed or picked.
+static int kbd3ds_only_field(newmenu *menu)
+{
+	int i;
+
+	for (i = 0; i < menu->nitems; i++)
+		if (i != menu->citem && menu->items[i].type != NM_TYPE_TEXT)
+			return 0;
+	return 1;
+}
+#endif
+
 int newmenu_key_command(window *wind, d_event *event, newmenu *menu)
 {
 	newmenu_item *item = &menu->items[menu->citem];
@@ -1003,6 +1044,45 @@ int newmenu_key_command(window *wind, d_event *event, newmenu *menu)
 			break;
 #ifdef __3DS__
 		case KEY_CTRLED+KEY_LCTRL:
+			// A (primary fire) ticks checkboxes and radio buttons, which Space does on a
+			// PC; Space is B here and backs out. On any other item A selects, as Enter.
+			if (menu->citem > -1 && item->type == NM_TYPE_CHECK)
+			{
+				item->value = !item->value;
+				if (menu->is_scroll_box &&
+				    (menu->citem == (menu->max_on_menu+menu->scroll_offset-1) || menu->citem == menu->scroll_offset))
+					menu->last_scroll_check = -1;
+				changed = 1;
+				break;
+			}
+			if (menu->citem > -1 && item->type == NM_TYPE_RADIO)
+			{
+				for (i = 0; i < menu->nitems; i++)
+					if (i != menu->citem && menu->items[i].type == NM_TYPE_RADIO &&
+					    menu->items[i].group == item->group && menu->items[i].value)
+						menu->items[i].value = 0;
+				item->value = 1;
+				changed = 1;
+				break;
+			}
+			// On a text or number field A opens the system keyboard on the bottom screen.
+			if (menu->citem > -1 && (item->type == NM_TYPE_INPUT ||
+			    (item->type == NM_TYPE_INPUT_MENU && item->group == 0)))
+			{
+				if (!kbd3ds_edit_item(menu, item))
+				{
+					changed = 1;	// cancelled: field unchanged, stay in the menu
+					break;
+				}
+				changed = 1;
+				// A save description, or a prompt that is just this one field (pilot
+				// name, starting level): confirming the keyboard accepts it.
+				if (item->type == NM_TYPE_INPUT_MENU)
+					item->group = 1;	// "editing", so Enter below accepts it
+				else if (!kbd3ds_only_field(menu))
+					break;	// a form: START accepts it
+			}
+			// fall through
 #endif
 		case KEY_ENTER:
 		case KEY_PADENTER:

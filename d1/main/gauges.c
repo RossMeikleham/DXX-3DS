@@ -1567,6 +1567,10 @@ void draw_player_ship(int cloak_state,int x, int y)
 		PIGGY_PAGE_IN(Gauges[GAUGE_SHIPS+color]);
 		bm = &GameBitmaps[Gauges[GAUGE_SHIPS+color].index];
 	}
+#else
+	// Without NETWORK bm stayed NULL (the OpenGL HUD read bm->bm_w and crashed).
+	PIGGY_PAGE_IN(Gauges[GAUGE_SHIPS]);
+	bm = &GameBitmaps[Gauges[GAUGE_SHIPS].index];
 #endif
 
 	//for(int i = 0; i < 8; i++) {

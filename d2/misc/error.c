@@ -28,6 +28,7 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 
 #ifdef __3DS__
 #include "3ds.h"
+#include <SDL/SDL.h>
 #endif
 
 #define MAX_MSG_LEN 256
@@ -77,6 +78,13 @@ void Error(const char *fmt,...)
 
 	Int3();
 
+#ifdef __3DS__
+	// Fatal errors before SDL video is up (e.g. missing game data) have no console yet.
+	if (!SDL_WasInit(SDL_INIT_VIDEO)) {
+		gfxInitDefault();
+		consoleInit(GFX_BOTTOM, NULL);
+	}
+#endif
 	print_exit_message(exit_message);
 
 #ifdef __3DS__

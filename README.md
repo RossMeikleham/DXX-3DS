@@ -29,8 +29,6 @@ A Nintendo 3DS port of Descent I & Descent II.  This is a fork of [DXX-Switch](h
 - Network/Multiplayer is not enabled
 - Level Selection menu doesn't work (no way to input a different level)
 
-### D1X
-- End of level "sequence" is skipped, was causing a segfault/crash
 
 ### D2X
 - Movies disabled, these were also causing crashes 
@@ -55,6 +53,16 @@ Follow instructions from [physfs-3ds](https://github.com/rossmeikleham/physfs-3d
 ## Install bannertool + makerom (required for cia builds, ignore for 3dsx only)
 - Build [bannertool](https://github.com/Steveice10/bannertool) and add it to the PATH
 - Build [makerom](https://github.com/profi200/Project_CTR) and add it to the PATH
+
+## Install NovaGL (D1's GPU renderer)
+D1 renders on the GPU by default, through [NovaGL](https://github.com/efimandreev0/NovaGL) (OpenGL ES 1.1 -> citro3d). Build and install it into portlibs with:
+```
+./3ds/build-novagl.sh
+```
+This needs `cmake` and devkitPro's `picasso`. To build D1 with the original software renderer instead (2D only, no NovaGL needed): `cd d1 && make RENDERER=software`
+
+## Stereoscopic 3D (D1)
+With the GPU renderer, D1 renders the top screen in stereoscopic 3D when the 3D slider is up. The slider sets the depth. Optional tuning: a `stereo3d.cfg` next to the game data with any of `Separation=0.25` (half the eye distance in mine units at full slider), `Convergence=14` (the distance that appears at screen depth) and `Enabled=0`.
 
 ## Compile DXX 3DS (3dsx + cia)
 ```

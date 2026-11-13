@@ -16,6 +16,13 @@
 #else
 #ifdef OGLES
 #include <GLES/gl.h>
+#ifndef GL_RED_BITS	// GLES 1.1 constants NovaGL's header doesn't define
+#define GL_RED_BITS	0x0D52
+#define GL_GREEN_BITS	0x0D53
+#define GL_BLUE_BITS	0x0D54
+#define GL_ALPHA_BITS	0x0D55
+#define GL_DEPTH_BITS	0x0D56
+#endif
 #else
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -53,6 +60,7 @@
 #include "gauges.h"
 #include "playsave.h"
 #include "args.h"
+#include "stereo3d.h"
 
 //change to 1 for lots of spew.
 #if 0
@@ -109,6 +117,16 @@ void ogl_freetexture(ogl_texture *gltexture);
 
 #ifdef OGLES
 // Replacement for gluPerspective
+/*
+ * Polygon-model UVs sit inside the model data at p+30+((nv&~1)+1)*2, which is only
+ * word-aligned when the model op is. The f2glf() float conversion lets GCC load them
+ * straight into VFP registers (vldr), and VFP loads fault on unaligned addresses:
+ * a data abort on the 3DS. Read them through a packed type (plain, unaligned-safe loads).
+ */
+typedef struct __attribute__((packed)) { fix u, v, l; } uvl_unaligned;
+#define UVL_U(c) (((const uvl_unaligned *)&uvl_list[c])->u)
+#define UVL_V(c) (((const uvl_unaligned *)&uvl_list[c])->v)
+
 void perspective(double fovy, double aspect, double zNear, double zFar)
 {
 	double xmin, xmax, ymin, ymax;
@@ -505,6 +523,165 @@ void ogl_cache_level_textures(void)
 	r_cachedtexcount = r_texcount;
 }
 
+#ifdef __3DS__
+/*
+ * Lines on the 3DS. The PICA200 has no line primitive and NovaGL sends GL_LINES to
+ * the GPU as two-vertex triangles, which draw nothing: the automap wireframe, the
+ * reticle and 2D lines were all missing. Each segment is transformed on the CPU with
+ * the current matrices, clipped to the near plane, and drawn as a quad `width` pixels
+ * wide in normalised device coordinates, with identity matrices.
+ */
+#define OGL_LINE_BATCH 64	// segments per draw
+#ifndef GL_CURRENT_COLOR
+#define GL_CURRENT_COLOR 0x0B00	// missing from NovaGL's header; glGetFloatv supports it
+#endif
+
+static void ogl_line_flush(GLfloat *qv, GLfloat *qc, int nv)
+{
+	GLboolean cull = glIsEnabled(GL_CULL_FACE);
+	GLboolean va = glIsEnabled(GL_VERTEX_ARRAY), ca = glIsEnabled(GL_COLOR_ARRAY);
+
+	if (!nv)
+		return;
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	if (cull)
+		glDisable(GL_CULL_FACE);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, qv);
+	glColorPointer(4, GL_FLOAT, 0, qc);
+	glDrawArrays(GL_TRIANGLES, 0, nv);
+	if (!va)
+		glDisableClientState(GL_VERTEX_ARRAY);
+	if (!ca)
+		glDisableClientState(GL_COLOR_ARRAY);
+
+	if (cull)
+		glEnable(GL_CULL_FACE);
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+}
+
+void ogl_draw_lines(GLenum mode, int dim, const GLfloat *v, int n, const GLfloat *rgba, float width)
+{
+	static GLfloat qv[OGL_LINE_BATCH * 6 * 3], qc[OGL_LINE_BATCH * 6 * 4];
+	GLfloat mv[16], pr[16], m[16], cur[4];
+	GLint vp[4];
+	float hx, hy, half = (width < 1.25f ? 1.25f : width) * 0.5f;
+	int nseg, s, r, c, k, nv = 0;
+
+	if (mode == GL_LINES)
+		nseg = n / 2;
+	else if (mode == GL_LINE_STRIP)
+		nseg = n - 1;
+	else
+		nseg = n;	// GL_LINE_LOOP
+	if (nseg <= 0)
+		return;
+
+	glGetFloatv(GL_MODELVIEW_MATRIX, mv);
+	glGetFloatv(GL_PROJECTION_MATRIX, pr);
+	glGetIntegerv(GL_VIEWPORT, vp);
+	for (c = 0; c < 4; c++)	// m = pr * mv, column-major
+		for (r = 0; r < 4; r++)
+			m[c * 4 + r] = pr[r] * mv[c * 4] + pr[4 + r] * mv[c * 4 + 1] + pr[8 + r] * mv[c * 4 + 2] + pr[12 + r] * mv[c * 4 + 3];
+	if (!rgba)
+		glGetFloatv(GL_CURRENT_COLOR, cur);
+	hx = vp[2] * 0.5f;
+	hy = vp[3] * 0.5f;
+	if (hx <= 0 || hy <= 0)
+		return;
+
+	for (s = 0; s < nseg; s++)
+	{
+		int idx[2], e;
+		GLfloat p[2][4], col[2][4], ndc[2][3], d[2], dx, dy, len, ox, oy;
+		GLfloat corner[4][3];
+		static const int tri[6] = { 0, 1, 2, 0, 2, 3 };
+
+		if (mode == GL_LINES)
+			idx[0] = 2 * s, idx[1] = 2 * s + 1;
+		else
+			idx[0] = s, idx[1] = (s + 1) % n;
+
+		for (e = 0; e < 2; e++)
+		{
+			const GLfloat *src = v + idx[e] * dim;
+			GLfloat x = src[0], y = src[1], z = dim > 2 ? src[2] : 0.0f;
+
+			for (r = 0; r < 4; r++)
+				p[e][r] = m[r] * x + m[4 + r] * y + m[8 + r] * z + m[12 + r];
+			memcpy(col[e], rgba ? rgba + idx[e] * 4 : cur, sizeof(col[e]));
+			d[e] = p[e][2] + p[e][3];	// distance inside the near plane (z >= -w)
+		}
+		if (d[0] < 0 && d[1] < 0)
+			continue;
+		for (e = 0; e < 2; e++)
+			if (d[e] < 0)	// clip this end to the near plane
+			{
+				float t = d[e] / (d[e] - d[!e]);
+
+				for (r = 0; r < 4; r++)
+				{
+					p[e][r] += (p[!e][r] - p[e][r]) * t;
+					col[e][r] += (col[!e][r] - col[e][r]) * t;
+				}
+			}
+		for (e = 0; e < 2; e++)
+		{
+			if (p[e][3] <= 1e-6f)
+				break;
+			for (r = 0; r < 3; r++)
+				ndc[e][r] = p[e][r] / p[e][3];
+		}
+		if (e < 2)
+			continue;
+
+		// Perpendicular offset of half the width, measured in pixels.
+		dx = (ndc[1][0] - ndc[0][0]) * hx;
+		dy = (ndc[1][1] - ndc[0][1]) * hy;
+		len = sqrtf(dx * dx + dy * dy);
+		if (len < 1e-4f)
+			dx = 1, dy = 0, len = 1;
+		ox = -dy / len * half / hx;
+		oy = dx / len * half / hy;
+
+		for (r = 0; r < 3; r++)
+		{
+			corner[0][r] = ndc[0][r];
+			corner[1][r] = ndc[0][r];
+			corner[2][r] = ndc[1][r];
+			corner[3][r] = ndc[1][r];
+		}
+		corner[0][0] -= ox; corner[0][1] -= oy;
+		corner[1][0] += ox; corner[1][1] += oy;
+		corner[2][0] += ox; corner[2][1] += oy;
+		corner[3][0] -= ox; corner[3][1] -= oy;
+
+		for (k = 0; k < 6; k++)
+		{
+			memcpy(qv + nv * 3, corner[tri[k]], 3 * sizeof(GLfloat));
+			memcpy(qc + nv * 4, col[tri[k] < 2 ? 0 : 1], 4 * sizeof(GLfloat));
+			nv++;
+		}
+		if (nv >= OGL_LINE_BATCH * 6)
+		{
+			ogl_line_flush(qv, qc, nv);
+			nv = 0;
+		}
+	}
+	ogl_line_flush(qv, qc, nv);
+}
+#endif
+
 bool g3_draw_line(g3s_point *p0,g3s_point *p1)
 {
 	int c;
@@ -525,7 +702,11 @@ bool g3_draw_line(g3s_point *p0,g3s_point *p1)
 	color_array[3] = color_array[7] = 1.0;
 	glVertexPointer(3, GL_FLOAT, 0, vertex_array);
 	glColorPointer(4, GL_FLOAT, 0, color_array);
+#ifdef __3DS__
+	ogl_draw_lines(GL_LINES, 3, vertex_array, 2, color_array, linedotscale);
+#else
 	glDrawArrays(GL_LINES, 0, 2);
+#endif
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 
@@ -673,7 +854,11 @@ void ogl_draw_vertex_reticle(int cross,int primary,int secondary,int color,int a
 	else
 		glColorPointer(4, GL_FLOAT, 0, dark_lca);
 	glVertexPointer(2, GL_FLOAT, 0, cross_lva);
+#ifdef __3DS__
+	ogl_draw_lines(GL_LINES, 2, cross_lva, 8, cross ? cross_lca : dark_lca, linedotscale * 2);
+#else
 	glDrawArrays(GL_LINES, 0, 8);
+#endif
 	
 	//left primary bar
 	if(primary == 0)
@@ -710,7 +895,11 @@ void ogl_draw_vertex_reticle(int cross,int primary,int secondary,int color,int a
 			glColorPointer(4, GL_FLOAT, 0, bright_lca);
 		if(!secondary_lva[0])
 			secondary_lva[0] = circle_array_init_2(16, 2.0, -10.0, 2.0, -2.0);
+#ifdef __3DS__
+		ogl_draw_lines(GL_LINE_LOOP, 2, secondary_lva[0], 16, (secondary != 1) ? dark_lca : bright_lca, linedotscale * 2);
+#else
 		ogl_drawcircle(16, GL_LINE_LOOP, secondary_lva[0]);
+#endif
 		//right secondary
 		if (secondary != 2)
 			glColorPointer(4, GL_FLOAT, 0, dark_lca);
@@ -718,7 +907,11 @@ void ogl_draw_vertex_reticle(int cross,int primary,int secondary,int color,int a
 			glColorPointer(4, GL_FLOAT, 0, bright_lca);
 		if(!secondary_lva[1])
 			secondary_lva[1] = circle_array_init_2(16, 2.0, 10.0, 2.0, -2.0);
+#ifdef __3DS__
+		ogl_draw_lines(GL_LINE_LOOP, 2, secondary_lva[1], 16, (secondary != 2) ? dark_lca : bright_lca, linedotscale * 2);
+#else
 		ogl_drawcircle(16, GL_LINE_LOOP, secondary_lva[1]);
+#endif
 	}
 	else {
 		//bottom/middle secondary
@@ -728,7 +921,11 @@ void ogl_draw_vertex_reticle(int cross,int primary,int secondary,int color,int a
 			glColorPointer(4, GL_FLOAT, 0, bright_lca);
 		if(!secondary_lva[2])
 			secondary_lva[2] = circle_array_init_2(16, 2.0, 0.0, 2.0, -8.0);
+#ifdef __3DS__
+		ogl_draw_lines(GL_LINE_LOOP, 2, secondary_lva[2], 16, (secondary != 4) ? dark_lca : bright_lca, linedotscale * 2);
+#else
 		ogl_drawcircle(16, GL_LINE_LOOP, secondary_lva[2]);
+#endif
 	}
 	
 	//glDisableClientState(GL_VERTEX_ARRAY);
@@ -790,7 +987,11 @@ int gr_ucircle(fix xc1, fix yc1, fix r1)
 	nsides = 10 + 2 * (int)(M_PI * f2fl(r1) / 19);
 	if(!circle_va)
 		circle_va = circle_array_init(nsides);
+#ifdef __3DS__
+	ogl_draw_lines(GL_LINE_LOOP, 2, circle_va, nsides, NULL, linedotscale);
+#else
 	ogl_drawcircle(nsides, GL_LINE_LOOP, circle_va);
+#endif
 	glPopMatrix();
 	return 0;
 }
@@ -929,8 +1130,8 @@ bool g3_draw_tmap(int nv,g3s_point **pointlist,g3s_uvl *uvl_list,g3s_lrgb *light
 			color_array[index4+2]    = bm->bm_flags & BM_FLAG_NO_LIGHTING ? 1.0 : f2glf(light_rgb[c].b);
 			color_array[index4+3]    = color_alpha;
 		}
-		texcoord_array[index2]   = f2glf(uvl_list[c].u);
-		texcoord_array[index2+1] = f2glf(uvl_list[c].v);
+		texcoord_array[index2]   = f2glf(UVL_U(c));
+		texcoord_array[index2+1] = f2glf(UVL_V(c));
 	}
 	
 	glVertexPointer(3, GL_FLOAT, 0, vertex_array);
@@ -982,20 +1183,20 @@ bool g3_draw_tmap_2(int nv, g3s_point **pointlist, g3s_uvl *uvl_list, g3s_lrgb *
 		
 		switch(orient){
 			case 1:
-				texcoord_array[index2]   = 1.0-f2glf(uvl_list[c].v);
-				texcoord_array[index2+1] = f2glf(uvl_list[c].u);
+				texcoord_array[index2]   = 1.0-f2glf(UVL_V(c));
+				texcoord_array[index2+1] = f2glf(UVL_U(c));
 				break;
 			case 2:
-				texcoord_array[index2]   = 1.0-f2glf(uvl_list[c].u);
-				texcoord_array[index2+1] = 1.0-f2glf(uvl_list[c].v);
+				texcoord_array[index2]   = 1.0-f2glf(UVL_U(c));
+				texcoord_array[index2+1] = 1.0-f2glf(UVL_V(c));
 				break;
 			case 3:
-				texcoord_array[index2]   = f2glf(uvl_list[c].v);
-				texcoord_array[index2+1] = 1.0-f2glf(uvl_list[c].u);
+				texcoord_array[index2]   = f2glf(UVL_V(c));
+				texcoord_array[index2+1] = 1.0-f2glf(UVL_U(c));
 				break;
 			default:
-				texcoord_array[index2]   = f2glf(uvl_list[c].u);
-				texcoord_array[index2+1] = f2glf(uvl_list[c].v);
+				texcoord_array[index2]   = f2glf(UVL_U(c));
+				texcoord_array[index2+1] = f2glf(UVL_V(c));
 				break;
 		}
 		
@@ -1241,6 +1442,19 @@ void ogl_start_frame(void){
 #else
 	gluPerspective(90.0,1.0,0.1,5000.0);
 #endif
+#ifdef __3DS__
+	// Stereo convergence (stereo3d_gpu.c): shift this eye's 3D view by
+	// Stereo_pixel_shift pixels. The shift goes in front of the frustum, as a
+	// clip-space x += t*w, so it's a constant screen-space shift; the HUD's 2D
+	// projection isn't shifted. Same frustum as perspective(90, 1, 0.1, 5000).
+	if (Stereo_pixel_shift)
+	{
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glTranslatef(2.0f * Stereo_pixel_shift / Canvas_width, 0.0f, 0.0f);
+		glFrustumf(-0.1f, 0.1f, -0.1f, 0.1f, 0.1f, 5000.0f);
+	}
+#endif
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();//clear matrix
 }
@@ -1260,12 +1474,23 @@ void ogl_end_frame(void){
 	glDisable(GL_DEPTH_TEST);
 }
 
+#ifdef __3DS__
+extern int n3ds_system_quit;
+#endif
+
 void gr_flip(void)
 {
+#ifdef __3DS__
+	if (n3ds_system_quit)	// closed from the HOME menu: no GPU, a swap would wait forever
+		return;
+#endif
 	if (GameArg.DbgRenderStats)
 		ogl_texture_stats();
 
 	ogl_do_palfx();
+#ifdef __3DS__
+	stereo3d_flip();	// 2D for frames that weren't drawn per eye
+#endif
 	ogl_swap_buffers_internal();
 	glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -1745,6 +1970,7 @@ void ogl_loadbmtexture_f(grs_bitmap *bm, int texfilt)
 		}
 		buf=decodebuf;
 
+#ifdef NETWORK
 		if(Game_mode & GM_MULTI && Netgame.BlackAndWhitePyros) {
 			char is_black_tex1 = 1; 
 			char is_black_tex2 = 1; 
@@ -1849,6 +2075,7 @@ void ogl_loadbmtexture_f(grs_bitmap *bm, int texfilt)
 				filter_blueship_wing = 0;
 			}			
 		}
+#endif
 
 	}
 	ogl_loadtexture(buf, 0, 0, bm->gltexture, bm->bm_flags, 0, texfilt);

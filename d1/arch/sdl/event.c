@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "event.h"
 #include "key.h"
 #include "mouse.h"
@@ -22,6 +23,53 @@ extern void mouse_motion_handler(SDL_MouseMotionEvent *mme);
 extern void mouse_cursor_autohide();
 
 static int initialised=0;
+
+#ifdef __3DS__
+/*
+ * devkitPro's 3DS SDL reports the buttons only as joystick buttons and the D-pad
+ * as a hat (since 2019; the 2018 builds sent every HID bit as a key event). The
+ * 3DS key table in key.c expects key events whose scancode is the HID bit number,
+ * so translate them here.
+ */
+static void n3ds_key(int bit, int pressed)
+{
+	SDL_KeyboardEvent k;
+
+	memset(&k, 0, sizeof(k));
+	k.type = pressed ? SDL_KEYDOWN : SDL_KEYUP;
+	k.state = pressed ? SDL_PRESSED : SDL_RELEASED;
+	k.keysym.scancode = bit;
+	key_handler(&k);
+}
+
+// SDL joystick button -> HID bit (KEY_A = 0 ... KEY_ZR = 15)
+static const int n3ds_button_bit[] = {
+	3,	// 0 START
+	0,	// 1 A
+	1,	// 2 B
+	10,	// 3 X
+	11,	// 4 Y
+	9,	// 5 L
+	8,	// 6 R
+	2,	// 7 SELECT
+	14,	// 8 ZL
+	15,	// 9 ZR
+};
+
+static void n3ds_hat(Uint8 value)
+{
+	static Uint8 old = SDL_HAT_CENTERED;
+	static const struct { Uint8 mask; int bit; } dpad[] = {
+		{ SDL_HAT_RIGHT, 4 }, { SDL_HAT_LEFT, 5 }, { SDL_HAT_UP, 6 }, { SDL_HAT_DOWN, 7 },
+	};
+	int i;
+
+	for (i = 0; i < 4; i++)
+		if ((value ^ old) & dpad[i].mask)
+			n3ds_key(dpad[i].bit, (value & dpad[i].mask) != 0);
+	old = value;
+}
+#endif
 
 void event_poll()
 {
@@ -52,19 +100,29 @@ void event_poll()
 				mouse_motion_handler((SDL_MouseMotionEvent *)&event);
 				idle = 0;
 				break;
-#ifndef __3DS__
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
+#ifdef __3DS__
+			{
+				SDL_JoyButtonEvent *jbe = (SDL_JoyButtonEvent *)&event;
+				if (jbe->button < sizeof(n3ds_button_bit) / sizeof(n3ds_button_bit[0]))
+					n3ds_key(n3ds_button_bit[jbe->button], jbe->state == SDL_PRESSED);
+			}
+#else
 				joy_button_handler((SDL_JoyButtonEvent *)&event);
+#endif
 				idle = 0;
 				break;
-#endif
 			case SDL_JOYAXISMOTION:
 				if (joy_axis_handler((SDL_JoyAxisEvent *)&event))
 					idle = 0;
 				break;
 			case SDL_JOYHATMOTION:
+#ifdef __3DS__
+				n3ds_hat(((SDL_JoyHatEvent *)&event)->value);
+#else
 				joy_hat_handler((SDL_JoyHatEvent *)&event);
+#endif
 				idle = 0;
 				break;
 			case SDL_JOYBALLMOTION:

@@ -36,8 +36,6 @@ char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE CORPORAT
 
 const unsigned int __stacksize__ = 8 * 1024 * 1024; // 8MB
 
-PrintConsole topScreen;
-PrintConsole bottomScreen;
 
 #endif
 
@@ -187,6 +185,11 @@ void print_commandline_help()
 }
 
 int Quitting = 0;
+#ifdef __3DS__
+// Set when the system asks the app to quit (HOME menu > Close, power off): nobody
+// can answer an "Abort game?" box then, and waiting for one hangs the close.
+int n3ds_system_quit = 0;	// also read by gr_flip() and arch_close()
+#endif
 
 // Default event handler for everything except the editor
 int standard_handler(d_event *event)
@@ -202,6 +205,12 @@ int standard_handler(d_event *event)
 		if (wind == Game_wind)
 		{
 			int choice;
+#ifdef __3DS__
+			if (n3ds_system_quit)
+				GameArg.SysAutoDemo = 0;
+			else
+#endif
+			{
 			Quitting = 0;
 			choice=nm_messagebox( NULL, 2, TXT_YES, TXT_NO, TXT_ABORT_GAME );
 			if (choice != 0)
@@ -210,6 +219,7 @@ int standard_handler(d_event *event)
 			{
 				GameArg.SysAutoDemo = 0;
 				Quitting = 1;
+			}
 			}
 		}
 		
@@ -277,6 +287,16 @@ int standard_handler(d_event *event)
 			return 1;
 
 		case EVENT_QUIT:
+#ifdef __3DS__
+			n3ds_system_quit = 1;	// only SDL_QUIT sends EVENT_QUIT
+			GameArg.SysAutoDemo = 0;
+			// Leave right away. Closing the windows one at a time lets the game carry on:
+			// from the end-of-level score screen it goes on to load the next level, which
+			// waits for a GPU the app no longer has (it hung there). exit() still runs
+			// arch_close() (atexit), which skips the GPU and DSP waits.
+			WriteConfigFile();
+			exit(0);
+#endif
 #ifdef EDITOR
 			if (SafetyCheck())
 #endif
@@ -300,12 +320,15 @@ int main(int argc, char *argv[])
 {
 
 #ifdef __3DS__
+    // Launched as a CIA from the HOME Menu there is no argv (argc 0, argv NULL);
+    // only the Homebrew Launcher passes one. argv[0] is used as PROGNAME below.
+    static char *n3ds_argv[] = { "sdmc:/3ds/D1/d1x-3ds", NULL };
+    if (argc < 1 || !argv || !argv[0]) { argc = 1; argv = n3ds_argv; }
     mcuHwcInit();
-    gfxInitDefault();
-
-    consoleInit(GFX_TOP, &topScreen);
-    consoleInit(GFX_BOTTOM, &bottomScreen);
-    consoleSelect(&topScreen);
+    // gfx and the bottom-screen console are set up by SDL (SDL_CONSOLEBOTTOM).
+    // Initialising them here first left both consoles pointing at framebuffers
+    // that SDL then freed and reallocated, so printf()/con_printf() wrote into
+    // freed linear memory (shared with GPU textures and DSP audio buffers).
 
 	osSetSpeedupEnable(1); // Should get away with removing this
 #endif
@@ -466,6 +489,9 @@ int main(int argc, char *argv[])
 	}
 
 	WriteConfigFile();
+#ifdef __3DS__
+	if (!n3ds_system_quit)	// the exit screen would wait for a GPU the app no longer has
+#endif
 	show_order_form();
 
 	con_printf( CON_DEBUG, "\nCleanup...\n" );
