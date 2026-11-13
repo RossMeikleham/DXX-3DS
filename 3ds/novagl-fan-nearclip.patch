@@ -1,0 +1,50 @@
+diff --git a/src/NovaGL.c b/src/NovaGL.c
+index 80a9863..b3b036c 100644
+--- a/src/NovaGL.c
++++ b/src/NovaGL.c
+@@ -1170,7 +1170,10 @@ static int nova_clip_tri_near_model(const NovaModelV tri[3], const float d[3], N
+  * Returns 1 if it drew the batch (caller must skip its own draw), else 0. */
+ static int nova_basic_near_clip(GLenum mode, GPU_Primitive_t prim, const uint8_t *flat,
+                                 int count, int stride, int pos_elements) {
+-    if (mode != GL_TRIANGLES || count < 3) return 0;
++    /* GL_TRIANGLE_FAN too (DXX-Rebirth draws every polygon as a fan): fan
++     * triangle i is (v0, v[i+1], v[i+2]); the clipped result is drawn as a list. */
++    int fan = (mode == GL_TRIANGLE_FAN);
++    if ((mode != GL_TRIANGLES && !fan) || count < 3) return 0;
+     if (stride != 24 || pos_elements != 3) return 0; /* only the [pos3|uv2|col4] layout */
+     if (g.active_shader != NOVA_SHADER_BASIC &&
+         g.active_shader != NOVA_SHADER_TEXMTX &&
+@@ -1195,7 +1198,7 @@ static int nova_basic_near_clip(GLenum mode, GPU_Primitive_t prim, const uint8_t
+     if (!crosses) return 0;
+ 
+     /* Pass 2 — clip the crossing triangles (worst case 2 out tris per input). */
+-    int in_tris = count / 3;
++    int in_tris = fan ? count - 2 : count / 3;
+     int out_bytes = in_tris * 6 * 24;
+     if (out_bytes > g.client_array_buf_size) return 0;
+     NovaModelV *out = (NovaModelV *) linear_alloc_ring(
+@@ -1206,7 +1209,12 @@ static int nova_basic_near_clip(GLenum mode, GPU_Primitive_t prim, const uint8_t
+     if (!out) return 0;
+     int out_count = 0;
+     for (int t = 0; t < in_tris; t++) {
++        NovaModelV fan_tri[3];
+         const NovaModelV *tri = &vin[t * 3];
++        if (fan) {
++            fan_tri[0] = vin[0]; fan_tri[1] = vin[t + 1]; fan_tri[2] = vin[t + 2];
++            tri = fan_tri;
++        }
+         float d[3];
+         for (int k = 0; k < 3; k++) {
+             const NovaModelV *p = &tri[k];
+@@ -1217,7 +1225,10 @@ static int nova_basic_near_clip(GLenum mode, GPU_Primitive_t prim, const uint8_t
+     if (out_count == 0) return 1; /* whole batch behind near — nothing to draw */
+ 
+     GSPGPU_FlushDataCache(out, (u32) (out_count * 24));
+-    draw_packed_run(mode, prim, (uint8_t *) out, out_count, 24, pos_elements);
++    if (fan)
++        draw_packed_run(GL_TRIANGLES, GPU_TRIANGLES, (uint8_t *) out, out_count, 24, pos_elements);
++    else
++        draw_packed_run(mode, prim, (uint8_t *) out, out_count, 24, pos_elements);
+     return 1;
+ }
+ #else

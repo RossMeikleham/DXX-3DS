@@ -17,6 +17,7 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
  *
  */
 
+#include "stereo3d.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -102,6 +103,9 @@ void show_framerate()
 			y -= LINE_SPACING * 2;
 	}
 
+#ifdef __3DS__
+	if (Stereo_eye_offset <= 0)	// in 3D the HUD is drawn once per eye: count each frame once
+#endif
 	fps_count++;
 	if (timer_query() >= fps_time + F1_0)
 	{
@@ -494,7 +498,8 @@ void game_render_frame_mono(int flip)
 {
 	gr_set_current_canvas(&Screen_3d_window);
 	
-	render_frame(0);
+	render_frame(Stereo_eye_offset);
+	stereo3d_shift_view(&Screen_3d_window);
 
 	update_cockpits();
 
@@ -610,6 +615,30 @@ void game_render_frame()
 {
 	set_screen_mode( SCREEN_GAME );
 	play_homing_warning();
+#if defined(__3DS__) && defined(OGL)
+	if (stereo3d_begin_frame())
+	{
+		int redraw = force_cockpit_redraw;
+
+		stereo3d_set_eye(-1);
+		game_render_frame_mono(GameArg.DbgUseDoubleBuffer);
+		if (force_cockpit_redraw == redraw)	// a cockpit switch aborted the frame: show it flat
+		{
+			fix frame_time = FrameTime;
+
+			// HUD/gauge code advances its timers while drawing; freeze time for the
+			// second pass so messages, fades and end-level timers run at normal speed.
+			FrameTime = 0;
+			stereo3d_set_eye(1);
+			game_render_frame_mono(GameArg.DbgUseDoubleBuffer);
+			stereo3d_end_frame(1);
+			FrameTime = frame_time;
+		}
+		else
+			stereo3d_end_frame(0);
+		return;
+	}
+#endif
 	game_render_frame_mono(GameArg.DbgUseDoubleBuffer);
 }
 
@@ -627,6 +656,12 @@ void show_boxed_message(char *msg, int RenderFlag)
 	x = (SWIDTH-w)/2;
 	y = (SHEIGHT-h)/2;
 	
+#if defined(__3DS__) && defined(OGL)
+	// The loading box is drawn on its own, with nothing behind it: make the rest of
+	// the screen black rather than whatever the GL surface holds.
+	if (!RenderFlag)
+		gr_clear_canvas(BM_XRGB(0, 0, 0));
+#endif
 	nm_draw_background(x-BORDERX,y-BORDERY,x+w+BORDERX,y+h+BORDERY);
 	
 	gr_string( 0x8000, y, msg );

@@ -100,6 +100,11 @@ bool ogl_ubitblt(int w, int h, int dx, int dy, int sx, int sy, grs_bitmap * src,
 void ogl_upixelc(int x, int y, int c);
 unsigned char ogl_ugpixel( grs_bitmap * bitmap, int x, int y );
 void ogl_ulinec(int left, int top, int right, int bot, int c);
+#ifdef __3DS__
+// NovaGL has no line primitive: draw GL_LINES / GL_LINE_STRIP / GL_LINE_LOOP as quads
+// `width` pixels wide. rgba: 4 floats per vertex, or NULL for the current colour.
+void ogl_draw_lines(GLenum mode, int dim, const GLfloat *v, int n, const GLfloat *rgba, float width);
+#endif
 
 #include "3d.h"
 bool g3_draw_tmap_2(int nv,g3s_point **pointlist,g3s_uvl *uvl_list,g3s_lrgb *light_rgb, grs_bitmap *bmbot,grs_bitmap *bm, int orient);

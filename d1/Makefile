@@ -43,6 +43,19 @@ INCLUDES	:=	include arch/include main arch/sdl
 #EXEFS_SRC	:=	exefs_src
 
 #---------------------------------------------------------------------------------
+# Renderer: gpu (default) draws with the PICA200 through DXX's OpenGL ES renderer and
+# NovaGL, a GLES 1.1 -> citro3d translator (build it with 3ds/build-novagl.sh), and
+# supports stereoscopic 3D. software is the original 8-bit software renderer, in 2D:
+#   make RENDERER=software
+#---------------------------------------------------------------------------------
+RENDERER	?=	gpu
+ifeq ($(RENDERER),gpu)
+# arch/ogl first: its gr.c replaces arch/sdl's (CFILES below drops the duplicate name)
+SOURCES		:=	$(subst arch/sdl,arch/ogl arch/sdl,$(SOURCES))
+DEFINES		+=	-DOGL -DOGLES
+endif
+
+#---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
@@ -64,12 +77,18 @@ LDFLAGS	=	-flto --specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 #LIBS	:= -lSDL_mixer -lSDL -lnx -lphysfs -lFLAC -lmikmod -lvorbisidec -logg -lm
 LIBS	:= -lphysfs -lSDL_mixer -lSDL_image -lSDL -lmikmod -lmad -lvorbisidec -logg -lpng -ljpeg -lz -lcitro3d -lctru -lm
+ifeq ($(RENDERER),gpu)
+LIBS	:= $(subst -lcitro3d,-lNovaGL -lcitro3d,$(LIBS))
+endif
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
 LIBDIRS	:= $(CTRULIB) $(PORTLIBS)
+ifneq ($(NOVAGL_PREFIX),)
+LIBDIRS	:= $(NOVAGL_PREFIX) $(LIBDIRS)	# NovaGL installed somewhere other than portlibs
+endif
 
 
 #---------------------------------------------------------------------------------
@@ -87,7 +106,7 @@ export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CFILES		:=	$(sort $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c))))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 PICAFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.v.pica)))

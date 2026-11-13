@@ -55,7 +55,11 @@
 #if defined(__APPLE__) && defined(__MACH__)
 #include <OpenGL/glu.h>
 #else
-#ifdef OGLES
+#if defined(OGLES) && defined(__3DS__)
+// Nintendo 3DS: OpenGL ES 1.1 through NovaGL (GLES 1.1 -> citro3d).
+#include "nova3ds.h"	// keeps <3ds.h> (its KEY_* names clash with key.h) out of this file
+extern int n3ds_system_quit;	// main/inferno.c
+#elif defined(OGLES)
 #include <EGL/egl.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -82,7 +86,7 @@ int gl_initialized=0;
 int linedotscale=1; // scalar of glLinewidth and glPointSize - only calculated once when resolution changes
 int sdl_no_modeswitch=0;
 
-#ifdef OGLES
+#if defined(OGLES) && !defined(__3DS__)
 EGLDisplay eglDisplay=EGL_NO_DISPLAY;
 EGLConfig eglConfig;
 EGLSurface eglSurface=EGL_NO_SURFACE;
@@ -108,7 +112,9 @@ bool TestEGLError(char* pszLocation)
 
 void ogl_swap_buffers_internal(void)
 {
-#ifdef OGLES
+#if defined(OGLES) && defined(__3DS__)
+	nova3ds_swap();
+#elif defined(OGLES)
 	eglSwapBuffers(eglDisplay, eglSurface);
 #else
 	SDL_GL_SwapBuffers();
@@ -253,7 +259,7 @@ int rpi_setup_element(int x, int y, Uint32 video_flags, int update)
 
 #endif // RPI
 
-#ifdef OGLES
+#if defined(OGLES) && !defined(__3DS__)
 void ogles_destroy(void)
 {
 	if( eglDisplay != EGL_NO_DISPLAY ) {
@@ -280,6 +286,29 @@ void ogles_destroy(void)
 }
 #endif
 
+#ifdef __3DS__
+/*
+ * SDL_Init(SDL_INIT_VIDEO) has already run gfxInitDefault() and C3D_Init() with SDL's
+ * small command buffer, but SDL_SetVideoMode() is never called, so SDL draws nothing.
+ * Hand citro3d to NovaGL with its own buffer sizes, then put the text console (and the
+ * touch panel) back on the bottom screen. SDL is still used for events and audio.
+ */
+int ogl_init_window(int x, int y)
+{
+	static int nova_up = 0;
+
+	if (gl_initialized)
+		ogl_smash_texture_list_internal();
+	if (!nova_up)
+	{
+		nova3ds_init();
+		nova_up = 1;
+	}
+	linedotscale = 1;
+	gl_initialized = 1;
+	return 0;
+}
+#else
 int ogl_init_window(int x, int y)
 {
 	int use_x,use_y,use_bpp;
@@ -423,6 +452,7 @@ int ogl_init_window(int x, int y)
 	gl_initialized=1;
 	return 0;
 }
+#endif // __3DS__
 
 int gr_check_fullscreen(void)
 {
@@ -436,7 +466,11 @@ int gr_toggle_fullscreen(void)
 	else
 		sdl_video_flags |= SDL_FULLSCREEN;
 
+#ifdef __3DS__
+	if (0)	// no window, no mode switch
+#else
 	if (gl_initialized)
+#endif
 	{
 		if (sdl_no_modeswitch == 0) {
 			if (!SDL_VideoModeOK(SM_W(Game_screen_mode), SM_H(Game_screen_mode), GameArg.DbgBpp, sdl_video_flags))
@@ -601,6 +635,9 @@ int gr_list_modes( u_int32_t gsmodes[] )
 int gr_check_mode(u_int32_t mode)
 {
 	unsigned int w, h;
+#ifdef __3DS__
+	return 32;	// one mode: the top screen (see gr_set_mode)
+#endif
 
 	w=SM_W(mode);
 	h=SM_H(mode);
@@ -623,6 +660,11 @@ int gr_set_mode(u_int32_t mode)
 
 	w=SM_W(mode);
 	h=SM_H(mode);
+#ifdef __3DS__
+	w = 400;	// the top screen, whatever the config asks for
+	h = 240;
+	Game_screen_mode = mode = SM(w, h);
+#endif
 
 	if (!gr_check_mode(mode))
 	{
@@ -787,6 +829,11 @@ void gr_close()
 {
 	ogl_brightness_r = ogl_brightness_g = ogl_brightness_b = 0;
 
+#ifdef __3DS__
+	// After HOME > Close, freeing GL textures and buffers waits for a GPU the app no
+	// longer has (it hung here on hardware). The system frees them all at exit.
+	if (!n3ds_system_quit)
+#endif
 	if (gl_initialized)
 	{
 		ogl_smash_texture_list_internal();
@@ -798,13 +845,18 @@ void gr_close()
 			d_free(grd_curscreen->sc_canvas.cv_bitmap.bm_data);
 		d_free(grd_curscreen);
 	}
+#ifdef __3DS__
+	if (!n3ds_system_quit)
+#endif
 	ogl_close_pixel_buffers();
 #ifdef _WIN32
 	if (ogl_rt_loaded)
 		OpenGL_LoadLibrary(false);
 #endif
 
-#ifdef OGLES
+#if defined(OGLES) && defined(__3DS__)
+	nova3ds_close();
+#elif defined(OGLES)
 	ogles_destroy();
 #ifdef RPI
 	con_printf(CON_DEBUG, "RPi: cleanuing up\n");
@@ -920,7 +972,11 @@ void ogl_ulinec(int left,int top,int right,int bot,int c)
 
 	glVertexPointer(2, GL_FLOAT, 0, vertex_array);
 	glColorPointer(4, GL_FLOAT, 0, color_array);
+#ifdef __3DS__
+	ogl_draw_lines(GL_LINES, 2, vertex_array, 2, color_array, linedotscale);
+#else
 	glDrawArrays(GL_LINES, 0, 2);
+#endif
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 }

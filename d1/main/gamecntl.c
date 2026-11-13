@@ -507,19 +507,21 @@ void game_load_3ds(void) { state_restore_all(1); }
 
 int game_menu_3ds(void)
 {
-	newmenu_item m[4];
+	newmenu_item m[5];
 
 	memset(m, 0, sizeof(m));
 	m[0].type = NM_TYPE_MENU; m[0].text = "Save game";
 	m[1].type = NM_TYPE_MENU; m[1].text = "Load game";
-	m[2].type = NM_TYPE_MENU; m[2].text = "Options";
-	m[3].type = NM_TYPE_MENU; m[3].text = "Abort game";
-	switch (newmenu_do(NULL, "Game menu", 4, m, NULL, NULL))
+	m[2].type = NM_TYPE_MENU; m[2].text = "Cockpit view";	// F3: cockpit, status bar, full screen
+	m[3].type = NM_TYPE_MENU; m[3].text = "Options";
+	m[4].type = NM_TYPE_MENU; m[4].text = "Abort game";
+	switch (newmenu_do(NULL, "Game menu", 5, m, NULL, NULL))
 	{
 		case 0: game_save_3ds(); break;
 		case 1: game_load_3ds(); break;
-		case 2: do_options_menu(); break;
-		case 3:
+		case 2: toggle_cockpit(); break;
+		case 3: do_options_menu(); break;
+		case 4:
 			if (nm_messagebox(NULL, 2, TXT_YES, TXT_NO, TXT_ABORT_GAME) == 0)
 			{
 				window_close(Game_wind);

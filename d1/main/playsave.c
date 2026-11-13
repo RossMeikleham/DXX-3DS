@@ -95,7 +95,12 @@ int new_player_config()
     PlayerCfg.MouseOverrun[0] = PlayerCfg.MouseOverrun[1] = PlayerCfg.MouseOverrun[2] = PlayerCfg.MouseOverrun[3] = PlayerCfg.MouseOverrun[4] = PlayerCfg.MouseOverrun[5] = 0;
 	PlayerCfg.MouseFSDead = 0;
 	PlayerCfg.MouseFSIndicator = 1;
+#ifdef __3DS__
+	// The cockpit hides a lot of a 400x240 screen; most players fly without it.
+	PlayerCfg.CockpitMode[0] = PlayerCfg.CockpitMode[1] = CM_FULL_SCREEN;
+#else
 	PlayerCfg.CockpitMode[0] = PlayerCfg.CockpitMode[1] = CM_FULL_COCKPIT;
+#endif
 	PlayerCfg.ReticleType = RET_TYPE_CLASSIC;
 	PlayerCfg.ReticleRGBA[0] = RET_COLOR_DEFAULT_R; PlayerCfg.ReticleRGBA[1] = RET_COLOR_DEFAULT_G; PlayerCfg.ReticleRGBA[2] = RET_COLOR_DEFAULT_B; PlayerCfg.ReticleRGBA[3] = RET_COLOR_DEFAULT_A;
 	PlayerCfg.ReticleSize = 0;
