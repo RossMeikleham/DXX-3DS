@@ -8,6 +8,7 @@
 #ifdef __3DS__
 #include <3ds.h>
 #include <sys/iosupport.h>
+extern int n3ds_system_quit;
 #endif
 #include "songs.h"
 #include "key.h"
@@ -31,6 +32,13 @@ void arch_close(void)
 
 	mouse_close();
 
+#ifdef __3DS__
+	// After HOME > Close the DSP is paused, so SDL's audio thread never gets a buffer
+	// back and closing the audio would wait for it forever. Just release the DSP.
+	if (n3ds_system_quit)
+		ndspExit();
+	else
+#endif
 	if (!GameArg.SndNoSound)
 	{
 		digi_close();
@@ -46,6 +54,11 @@ void arch_close(void)
 	devoptab_list[STD_OUT] = devoptab_list[STD_ERR];
 #endif
 
+#ifdef __3DS__
+	// After HOME > Close, SDL_Quit() joins SDL's video thread, which is stuck in
+	// C3D_FrameBegin() waiting for the GPU. The system frees it all at exit.
+	if (!n3ds_system_quit)
+#endif
 	SDL_Quit();
 }
 

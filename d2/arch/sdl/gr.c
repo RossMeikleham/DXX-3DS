@@ -23,9 +23,20 @@ int sdl_video_flags = SDL_SWSURFACE | SDL_HWPALETTE | SDL_DOUBLEBUF;
 SDL_Surface *screen,*canvas;
 int gr_installed = 0;
 
+#ifdef __3DS__
+extern int n3ds_system_quit;
+#endif
+
 void gr_flip()
 {
 	SDL_Rect src, dest;
+
+#ifdef __3DS__
+	// Closed from the HOME menu: the app is in the background without the GPU,
+	// and a flip would wait for it forever.
+	if (n3ds_system_quit)
+		return;
+#endif
 
 	dest.x = src.x = dest.y = src.y = 0;
 	dest.w = src.w = canvas->w;

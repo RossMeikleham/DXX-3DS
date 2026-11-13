@@ -199,7 +199,7 @@ int Quitting = 0;
 #ifdef __3DS__
 // Set when the system asks the app to quit (HOME menu > Close, power off): nobody
 // can answer an "Abort game?" box then, and waiting for one hangs the close.
-static int quit_requested_by_system = 0;
+int n3ds_system_quit = 0;	// also read by gr_flip() and arch_close()
 #endif
 
 // Default event handler for everything except the editor
@@ -217,7 +217,7 @@ int standard_handler(d_event *event)
 		{
 			int choice;
 #ifdef __3DS__
-			if (quit_requested_by_system)
+			if (n3ds_system_quit)
 				GameArg.SysAutoDemo = 0;
 			else
 #endif
@@ -299,7 +299,7 @@ int standard_handler(d_event *event)
 
 		case EVENT_QUIT:
 #ifdef __3DS__
-			quit_requested_by_system = 1;	// only SDL_QUIT sends EVENT_QUIT
+			n3ds_system_quit = 1;	// only SDL_QUIT sends EVENT_QUIT
 			GameArg.SysAutoDemo = 0;
 #endif
 #ifdef EDITOR
@@ -514,6 +514,9 @@ int main(int argc, char *argv[])
 	}
 
 	WriteConfigFile();
+#ifdef __3DS__
+	if (!n3ds_system_quit)	// the exit screen would wait for a GPU the app no longer has
+#endif
 	show_order_form();
 
 	con_printf( CON_DEBUG, "\nCleanup...\n" );
